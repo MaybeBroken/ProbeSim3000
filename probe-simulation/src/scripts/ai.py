@@ -7,6 +7,14 @@ from src.scripts.weapons import lasers
 from time import monotonic, sleep
 from random import randint
 
+shipHealth = None
+
+
+def setupShipHealth(_shipHealth):
+    global shipHealth
+    shipHealth = _shipHealth
+
+
 def behaviors(ai):
     AIbehaviors = ai.getAiBehaviors()
 
@@ -20,11 +28,20 @@ def behaviors(ai):
     return internals
 
 
-def droneFire(target, origin, lastFire):
-    if abs(int(abs(monotonic())) - int(abs(lastFire))) > 3:
-        lasers.fire(origin=origin, target=target, destroy=False)
-        print(abs(int(abs(monotonic())) - int(abs(lastFire))))
-        lastFire = int(abs(monotonic()))
+def droneFire(target, origin, ship):
+    global shipHealth
+    newTarget = NodePath("newDroneTarget")
+    newTarget.setPos(target.getPos())
+    sleep(0.25)
+    if target.getDistance(newTarget) > 8:
+        totalTarget = newTarget
+    else:
+        totalTarget = target
+        try:
+            shipHealth["value"] -= 1
+        except:
+            ...
+    lasers.fire(origin=origin, target=totalTarget, destroy=False)
 
 
 def fireLoop(ship, char):
@@ -33,7 +50,7 @@ def fireLoop(ship, char):
             ai = char["ai"]
             node = char["mesh"]
             if ship.getDistance(node) <= 50:
-                droneFire(ship, node, char["lastFire"])
+                droneFire(ship, node, char)
             sleep(randint(2, 5))
 
     Thread(target=_loop).start()
@@ -47,22 +64,17 @@ updateTime = 0
 
 
 def update(AIworld, aiChars, ship):
-    global updateTime
-    updateTime += 1
-    if updateTime == 8:
-        updateTime = 0
-        for aiChar in aiChars:
-            char = aiChars[aiChar]
-            ai = aiChars[aiChar]["ai"]
-            node = aiChars[aiChar]["mesh"]
-            if char["active"]:
-                if ship.getDistance(node) > 50:
-                    behaviors(ai).PURSUE(ship)
-                else:
-                    behaviors(ai).REMOVE("pursue")
-                    node.lookAt((ship.get_x(), ship.get_y(), ship.get_z()))
-                    node.setP(node.getP() + 180)
-                    node.setR(node.getR() + 180)
+    for char in aiChars:
+        ai = char["ai"]
+        node = char["mesh"]
+        if char["active"]:
+            if ship.getDistance(node) > 50:
+                behaviors(ai).PURSUE(ship)
             else:
-                behaviors(ai).FLEE(ship, 10000, 10000, 1)
+                behaviors(ai).REMOVE("pursue")
+                node.lookAt((ship.get_x(), ship.get_y(), ship.get_z()))
+                node.setP(node.getP() + 180)
+                node.setR(node.getR() + 180)
+        else:
+            behaviors(ai).FLEE(ship, 10000, 10000, 1)
     AIworld.update()

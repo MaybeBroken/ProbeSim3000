@@ -53,13 +53,13 @@ class settingsScreen:
                 self.droneHitRadiusSlider["value"] = 8
                 self.droneNum.set("10")
                 self.droneHealthSlider["value"] = 8
-            elif arg == "Hard":
+            elif arg == "Difficult":
                 self.shipHealthSlider["value"] = 8
                 self.shipHitRadiusSlider["value"] = 8
                 self.droneHitRadiusSlider["value"] = 5
                 self.droneNum.set("25")
                 self.droneHealthSlider["value"] = 16
-            elif arg == "Impossible ;)":
+            elif arg == "Hard":
                 self.shipHealthSlider["value"] = 3
                 self.shipHitRadiusSlider["value"] = 12
                 self.droneHitRadiusSlider["value"] = 3
@@ -144,11 +144,12 @@ class settingsScreen:
         )
 
         self.startupMenuCreditsText = OnscreenText(
-            "Programmed by David Sponseller",
-            pos=(-0.8 * monitor[0].width / monitor[0].height, -0.95),
-            scale=0.04,
+            text="Programmed by David Sponseller",
+            pos=(-0.7 * monitor[0].width / monitor[0].height, -0.9),
+            scale=0.02,
             parent=self.startupMenuFrame,
             fg=(0.5, 7, 7, 0.75),
+            font=self.loader.loadFont("src/fonts/sector_034.ttf"),
         )
 
         self.settingsFrame = DirectFrame(
@@ -164,77 +165,91 @@ class settingsScreen:
         self.presetsTitle = OnscreenText(
             text="Presets: ",
             parent=self.settingsTopBar,
-            scale=0.04,
+            scale=0.02,
             pos=(-0.1, 0.69),
             fg=(1, 1, 1, 1),
+            font=self.loader.loadFont("src/fonts/sector_034.ttf"),
         )
         self.presetsMenu = DirectOptionMenu(
             parent=self.settingsTopBar,
-            items=["Blank", "Easy", "Medium", "Hard", "Impossible ;)"],
+            items=[
+                "Blank                 |",
+                "Easy                  |",
+                "Medium            |",
+                "Difficult            |",
+                "Hard                  |",
+            ],
             command=updateDifficulty,
             scale=0.06,
             pos=(0.05, 1, 0.69),
+            text_font=self.loader.loadFont("src/fonts/sector_034.ttf"),
+            text_scale=0.6,
+            text_pos=(0.3, 0, 0),
         )
 
         self.shipHealthTitle = OnscreenText(
             text=f"Ship Hit Points: 1",
             parent=self.settingsFrame,
-            scale=0.05,
-            pos=(0.05, 0.55),
+            scale=0.03,
+            pos=(0.25, 0.55),
             fg=(1, 1, 1, 1),
+            font=self.loader.loadFont("src/fonts/sector_034.ttf"),
         )
         self.shipHealthSlider = DirectSlider(
             parent=self.settingsFrame,
             range=(1, 32),
             pageSize=1,
             scale=0.15,
-            pos=(0.05, 0, 0.485),
+            pos=(0.25, 0, 0.485),
             command=updateGuiValues,
         )
 
         self.shipHitRadiusTitle = OnscreenText(
             text=f"Ship Hitbox Radius: 3",
             parent=self.settingsFrame,
-            scale=0.05,
-            pos=(0.05, 0.4),
+            scale=0.03,
+            pos=(0.25, 0.4),
             fg=(1, 1, 1, 1),
+            font=self.loader.loadFont("src/fonts/sector_034.ttf"),
         )
         self.shipHitRadiusSlider = DirectSlider(
             parent=self.settingsFrame,
             range=(3, 15),
             pageSize=1,
             scale=0.15,
-            pos=(0.05, 0, 0.335),
+            pos=(0.25, 0, 0.335),
             command=updateGuiValues,
         )
 
         self.droneHitRadiusTitle = OnscreenText(
             text=f"Drone Hitbox Radius: 3",
             parent=self.settingsFrame,
-            scale=0.05,
-            pos=(0.05, 0.25),
+            scale=0.03,
+            pos=(0.25, 0.25),
             fg=(1, 1, 1, 1),
+            font=self.loader.loadFont("src/fonts/sector_034.ttf"),
         )
         self.droneHitRadiusSlider = DirectSlider(
             parent=self.settingsFrame,
             range=(3, 15),
             pageSize=1,
             scale=0.15,
-            pos=(0.05, 0, 0.175),
+            pos=(0.25, 0, 0.175),
             command=updateGuiValues,
         )
 
         self.droneNumTitle = OnscreenText(
             text=f"Number of Drones:",
             parent=self.settingsFrame,
-            scale=0.05,
-            pos=(0.05, 0.05),
+            scale=0.03,
+            pos=(0.25, 0.05),
             fg=(1, 1, 1, 1),
+            font=self.loader.loadFont("src/fonts/sector_034.ttf"),
         )
         self.droneNum = DirectEntry(
             parent=self.settingsFrame,
             scale=0.05,
-            pos=(-0.15, 0, -0.05),
+            pos=(0.05, 0, -0.05),
             initialText="5",
             cursorKeys=True,
             focusOutCommand=updateGuiValues,
@@ -243,16 +258,17 @@ class settingsScreen:
         self.droneHealthTitle = OnscreenText(
             text=f"Drone Hit Points: 1",
             parent=self.settingsFrame,
-            scale=0.05,
-            pos=(0.05, -0.225),
+            scale=0.03,
+            pos=(0.25, -0.225),
             fg=(1, 1, 1, 1),
+            font=self.loader.loadFont("src/fonts/sector_034.ttf"),
         )
         self.droneHealthSlider = DirectSlider(
             parent=self.settingsFrame,
             range=(1, 32),
             pageSize=1,
             scale=0.15,
-            pos=(0.05, 0, -0.3),
+            pos=(0.25, 0, -0.3),
             command=updateGuiValues,
         )
 
@@ -309,3 +325,6 @@ class GUI:
             0.025 / (monitor[0].width / monitor[0].height),
             0.025,
         )
+
+    def HUD(self):
+        None

@@ -5,7 +5,7 @@ from src.scripts.guiUtils import fade
 from direct.particles.ParticleEffect import ParticleEffect
 
 
-def destroyNode(node, particleId):
+def destroyNode(node):
     node.removeNode()
 
 
@@ -34,10 +34,10 @@ class _firing:
                 target=fade.fadeOutGuiElement_ThreadedOnly,
                 args=(
                     modelNode,
-                    20,
+                    15,
                     "after",
                     destroyNode,
-                    (modelNode),
+                    [modelNode],
                 ),
             ).start()
         else:
@@ -46,7 +46,7 @@ class _firing:
                 target=fade.fadeOutGuiElement_ThreadedOnly,
                 args=(
                     modelNode,
-                    20,
+                    15,
                 ),
             ).start()
 
@@ -65,7 +65,11 @@ class lasers:
         _internals["materials"]["glowMat"] = glowMat
 
     def fire(
-        self: None = _self, origin=None, target=None, normal=(0, 0, 0), destroy=True
+        self: None = _self,
+        origin=None,
+        target=None,
+        normal=(0, 0, 0),
+        destroy=True,
     ):
         _firing.addLaser(
             data={"origin": origin, "target": target},
@@ -77,6 +81,6 @@ class lasers:
                 target=fade.fadeOutGuiElement_ThreadedOnly,
                 args=(
                     target,
-                    100,
+                    80,
                 ),
             ).start()

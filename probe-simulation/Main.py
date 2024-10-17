@@ -154,6 +154,9 @@ class Main(ShowBase):
         self.playStaticTex()
         self.velocityMeter.hide()
         self.posMeter.hide()
+        self.HpIndicator["range"] = Wvars.shipHealth
+        self.HpIndicator["value"] = Wvars.shipHitPoints
+        ai.setupShipHealth(self.HpIndicator)
 
     def sync(self, task):
         Wvars.dataKeys = {
@@ -588,7 +591,7 @@ class Main(ShowBase):
 
     def setupAiWorld(self):
         self.AIworld = AIWorld(self.render)
-        self.aiChars = {}
+        self.aiChars = []
         for num in range(Wvars.droneNum):
             dNode = self.loader.loadModel("src/models/drone/drone.bam")
             dNode.instanceTo(self.droneMasterNode)
@@ -616,8 +619,7 @@ class Main(ShowBase):
                 barColor=(1, 0.1, 0.2, 1),
                 relief=None,
             )
-
-            self.aiChars[num] = {
+            aiObject = {
                 "mesh": dNode,
                 "ai": AIchar,
                 "active": True,
@@ -625,8 +627,10 @@ class Main(ShowBase):
                 "id": num,
                 "health": Wvars.droneHealth,
                 "healthBar": healthBar,
-                "lastFire":t.monotonic()
             }
+
+            self.aiChars.append(aiObject)
+            ai.fireLoop(self.ship, aiObject)
 
     def setupScene(self):
         # setup sun
@@ -733,5 +737,6 @@ class Main(ShowBase):
                 weapons.lasers.fire(
                     origin=self.ship, target=hitObject, normal=normal, destroy=destroy
                 )
+
 
 Main().run()
