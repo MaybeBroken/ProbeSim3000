@@ -5,7 +5,7 @@ from direct.stdpy.threading import Thread
 from src.scripts.weapons import lasers
 
 from time import monotonic, sleep
-
+from random import randint
 
 def behaviors(ai):
     AIbehaviors = ai.getAiBehaviors()
@@ -25,6 +25,18 @@ def droneFire(target, origin, lastFire):
         lasers.fire(origin=origin, target=target, destroy=False)
         print(abs(int(abs(monotonic())) - int(abs(lastFire))))
         lastFire = int(abs(monotonic()))
+
+
+def fireLoop(ship, char):
+    def _loop():
+        while True:
+            ai = char["ai"]
+            node = char["mesh"]
+            if ship.getDistance(node) <= 50:
+                droneFire(ship, node, char["lastFire"])
+            sleep(randint(2, 5))
+
+    Thread(target=_loop).start()
 
 
 def removeChar(ai, ship):
@@ -51,8 +63,6 @@ def update(AIworld, aiChars, ship):
                     node.lookAt((ship.get_x(), ship.get_y(), ship.get_z()))
                     node.setP(node.getP() + 180)
                     node.setR(node.getR() + 180)
-                    if ship.getDistance(node) <= 50:
-                        droneFire(ship, node, char["lastFire"])
             else:
                 behaviors(ai).FLEE(ship, 10000, 10000, 1)
     AIworld.update()

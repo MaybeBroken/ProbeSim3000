@@ -733,3 +733,5 @@ class Main(ShowBase):
                 weapons.lasers.fire(
                     origin=self.ship, target=hitObject, normal=normal, destroy=destroy
                 )
+
+Main().run()
