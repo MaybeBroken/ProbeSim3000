@@ -50,6 +50,7 @@ from panda3d.core import (
     CollisionHandlerPusher,
     MovieTexture,
     CardMaker,
+    ShowBoundsEffect,
 )
 
 from direct.gui.OnscreenImage import OnscreenImage
@@ -141,8 +142,6 @@ class Main(ShowBase):
         self.taskMgr.add(self.sync, "syncServer+Client")
 
     def postLoad(self):
-        self.render.prepareScene(self.win.getGsg())
-        self.voyager.flattenLight()
         self.tex = {}
         disp.GUI.miniMap(disp.GUI)
         Wvars.shipHitPoints = Wvars.shipHealth
@@ -162,6 +161,11 @@ class Main(ShowBase):
         self.death.hide()
         self.playTex("death")
 
+        # droneBounds = ShowBoundsEffect.make()
+        # for char in self.aiChars:
+        #     node = char['mesh']
+        #     node.setEffect(droneBounds)
+
         #
 
         self.velocityMeter.hide()
@@ -169,6 +173,8 @@ class Main(ShowBase):
         self.HpIndicator["range"] = Wvars.shipHealth
         self.HpIndicator["value"] = Wvars.shipHitPoints
         ai.setupShipHealth(self.HpIndicator)
+        self.voyager.flattenLight()
+        self.render.prepareScene(self.win.getGsg())
 
     def startPlayer(self, media_file, name):
         self.tex[name] = MovieTexture("name")
@@ -224,7 +230,9 @@ class Main(ShowBase):
                 self.check_resume()
         else:
             ai.update(AIworld=self.AIworld, aiChars=self.aiChars, ship=self.ship)
-            self.droneCount.setText(f'Drones Remaining: {len(list(_ai for _ai in self.aiChars if _ai["active"]))}')
+            self.droneCount.setText(
+                f'Drones Remaining: {len(list(_ai for _ai in self.aiChars if _ai["active"]))}'
+            )
 
             # update velocities
             if self.update_time > 4:
