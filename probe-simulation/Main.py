@@ -198,6 +198,8 @@ class Main(ShowBase):
         }
         return task.cont
 
+    doneDeath = False
+
     def update(self, task):
         result = task.cont
         playerMoveSpeed = Wvars.speed / 100
@@ -205,18 +207,24 @@ class Main(ShowBase):
             self.ship.getDistance(self.voyager) > 14000
             or self.HpIndicator["value"] <= 0
         ):
-            self.ship.setPos(0, 0, 0)
-            self.fullStop()
-            self.updateOverlay()
-            self.silenceInput()
-            self.pauseFrame = DirectFrame(
-                parent=self.render2d, frameSize=(-1, 1, -1, 1), frameColor=(0, 0, 0, 1)
-            )
-            self.death.show()
-            self.fullStop()
-            self.check_resume()
+            if not self.doneDeath:
+                self.doneDeath = True
+                self.ship.setPos(0, 0, 0)
+                self.fullStop()
+                self.updateOverlay()
+                self.silenceInput()
+                ai.pauseAll(self.aiChars)
+                self.pauseFrame = DirectFrame(
+                    parent=self.render2d,
+                    frameSize=(-1, 1, -1, 1),
+                    frameColor=(0, 0, 0, 1),
+                )
+                self.death.show()
+                self.fullStop()
+                self.check_resume()
         else:
             ai.update(AIworld=self.AIworld, aiChars=self.aiChars, ship=self.ship)
+            self.droneCount.setText(f'Drones Remaining: {len(list(_ai for _ai in self.aiChars if _ai["active"]))}')
 
             # update velocities
             if self.update_time > 4:
@@ -382,8 +390,10 @@ class Main(ShowBase):
     def resume(self):
         self.pauseFrame.destroy()
         self.death.hide()
-        self.fullStop()
         self.reviveInput()
+        self.fullStop()
+        ai.resumeAll(self.aiChars, self.ship)
+        self.doneDeath = False
 
     def updateOverlay(self):
         self.static.setAlphaScale(

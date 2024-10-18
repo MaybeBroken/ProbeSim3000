@@ -63,6 +63,18 @@ def removeChar(ai, ship):
 updateTime = 0
 
 
+def pauseAll(aiChars):
+    for char in aiChars:
+        ai = char["ai"]
+        behaviors(ai).REMOVE("pursue")
+
+
+def resumeAll(aiChars, target):
+    for char in aiChars:
+        ai = char["ai"]
+        behaviors(ai).PURSUE(target)
+
+
 def update(AIworld, aiChars, ship):
     for char in aiChars:
         ai = char["ai"]

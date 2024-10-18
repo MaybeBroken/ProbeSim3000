@@ -3,7 +3,7 @@ from direct.gui.DirectGui import *
 from src.scripts.guiUtils import fade
 import src.scripts.vars as Wvars
 from direct.directtools.DirectGrid import DirectGrid
-from panda3d.core import deg2Rad
+from panda3d.core import deg2Rad, TextNode
 import sys
 
 monitor = None
@@ -308,6 +308,15 @@ class GUI:
             scale=(0.25, 1, 0.5),
             pos=(0, 0, -0.9),
             barColor=(1, 0, 0, 1),
+        )
+        self.main.droneCount = OnscreenText(
+            text="Drones Remaining: ",
+            pos=(-0.8, 0.8),
+            parent=self.guiFrame,
+            scale=(0.03 * (monitor[0].height / monitor[0].width), 0.03, 0.03),
+            font=self.main.loader.loadFont("src/fonts/sector_034.ttf"),
+            align=TextNode.ALeft,
+            fg=(1, 1, 1, 1),
         )
         self.main.displayOverlay = DirectFrame(parent=self.guiFrame)
 
