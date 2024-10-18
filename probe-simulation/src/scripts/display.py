@@ -34,32 +34,32 @@ class ShaderCall:
 class settingsScreen:
     def start(self):
         def updateDifficulty(arg):
-            if arg == "Blank":
+            if arg == "Blank                 |":
                 self.shipHealthSlider["value"] = 0
                 self.shipHitRadiusSlider["value"] = 0
                 self.droneHitRadiusSlider["value"] = 0
                 self.droneNum.set("0")
                 self.droneHealthSlider["value"] = 1
 
-            elif arg == "Easy":
+            elif arg == "Easy                  |":
                 self.shipHealthSlider["value"] = 20
                 self.shipHitRadiusSlider["value"] = 2
                 self.droneHitRadiusSlider["value"] = 12
                 self.droneNum.set("5")
                 self.droneHealthSlider["value"] = 3
-            elif arg == "Medium":
+            elif arg == "Medium            |":
                 self.shipHealthSlider["value"] = 15
                 self.shipHitRadiusSlider["value"] = 6
                 self.droneHitRadiusSlider["value"] = 8
                 self.droneNum.set("10")
                 self.droneHealthSlider["value"] = 8
-            elif arg == "Difficult":
+            elif arg == "Difficult            |":
                 self.shipHealthSlider["value"] = 8
                 self.shipHitRadiusSlider["value"] = 8
                 self.droneHitRadiusSlider["value"] = 5
                 self.droneNum.set("25")
                 self.droneHealthSlider["value"] = 16
-            elif arg == "Hard":
+            elif arg == "Hard                  |":
                 self.shipHealthSlider["value"] = 3
                 self.shipHitRadiusSlider["value"] = 12
                 self.droneHitRadiusSlider["value"] = 3

@@ -104,19 +104,22 @@ class Main(ShowBase):
 
         self.setupControls()
         self.loadInitialTextures()
-        thread.Thread(
-            target=server.startServer, daemon=True, args=[8765, Wvars.serverKeys]
-        ).start()
         Wvars.cursorLock = False
 
-        GUI.start(self=GUI, main=self)
+        self.startGui()
         # end of setup tasks
 
         self.taskMgr.add(self.update, "update")
 
     def update(self, task):
         result = task.cont
-
+        try:
+            if server.cliDead:
+                self.relaunchButton.setFrameColor((1, 1, 1, 1))
+            else:
+                self.relaunchButton.setFrameColor((0.2, 0.2, 0.2, 1))
+        except:
+            None
         # do all systems updates
 
         dt = globalClock.getDt()  # type: ignore
@@ -164,16 +167,6 @@ class Main(ShowBase):
                 self.lastMouseX = mouseX
                 self.lastMouseY = mouseY
 
-        if Wvars.aiming == True:
-            md = self.win.getPointer(0)
-            self.lastMouseX = md.getX()
-            self.lastMouseY = md.getY()
-
-            self.crosshair.setPos(
-                (2 / monitor[0].width) * md.getX() - 1,
-                0,
-                -((2 / monitor[0].height) * md.getY() - 1),
-            )
         return result
 
     def setupControls(self):
@@ -246,15 +239,9 @@ class Main(ShowBase):
     def load(self):
         self.loadAllTextures()
 
-
-# this class controls most of the things on the screen
-
-
-class GUI(Main):
-    def start(self, main):
-        self.guiFrame = DirectFrame(parent=main.aspect2d)
-        self.main = main
-        GUI.setupIntroMenu(self=self)
+    def startGui(self):
+        self.guiFrame = DirectFrame(parent=self.aspect2d)
+        self.setupIntroMenu()
 
     def setupIntroMenu(self):
         self.startupMenuFrame = DirectFrame(parent=self.guiFrame)
@@ -291,12 +278,10 @@ class GUI(Main):
             command=thread.Thread(
                 target=self.fadeOutGuiElement_ThreadedOnly,
                 args=[
-                    self,
                     self.startupMenuFrame,
                     25,
                     "Before",
                     self.setupLoaderFromMenu,
-                    [self],
                 ],
                 daemon=True,
             ).start,
@@ -327,7 +312,7 @@ class GUI(Main):
         )
         self.startupLoaderFrame.set_transparency(1)
 
-        self.setBackgroundColor(self=self, r=0, g=0, b=0, a=1, win=self.main.win)
+        self.setBackgroundColor(r=0, g=0, b=0, a=1)
 
         self.startupLoaderVoyagerLogo = OnscreenImage(
             parent=self.startupLoaderFrame,
@@ -346,7 +331,6 @@ class GUI(Main):
         thread.Thread(
             target=self.fadeInGuiElement_ThreadedOnly,
             args=[
-                self,
                 self.startupLoaderFrame,
                 50,
                 None,
@@ -355,8 +339,9 @@ class GUI(Main):
             ],
             daemon=True,
         ).start()
-        self.setupMainframe()
-
+        self.readyContinue = 30
+        self.continueCount = 0
+        self.taskMgr.add(self.setupMainframe)
 
     def fadeOutGuiElement_ThreadedOnly(
         self, element, timeToFade, execBeforeOrAfter, target, args=()
@@ -394,9 +379,30 @@ class GUI(Main):
 
     def hideGuiFrame(self):
         self.guiFrame.hide()
-    
 
-    def setupMainframe(self): ...
+    def setupMainframe(self, task):
+        if self.readyContinue >= self.continueCount:
+            thread.Thread(target=server.startServer).start()
+
+            def setReady():
+                server.sendRespawn = True
+
+            self.relaunchButton = DirectButton(
+                parent=self.aspect2d, text="respawn", command=setReady, scale=0.2
+            )
+            thread.Thread(
+                target=self.fadeOutGuiElement_ThreadedOnly,
+                args=[
+                    self.startupLoaderFrame,
+                    50,
+                    None,
+                    None,
+                    None,
+                ],
+            ).start()
+        else:
+            self.continueCount += 1
+            return task.cont
 
 
-app = Main()
+Main().run()

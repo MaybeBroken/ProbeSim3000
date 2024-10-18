@@ -1,19 +1,49 @@
+from os import system as _system
+import time as t
 import asyncio
-import websockets
-import src.scripts.decoder as decoder
+import socket
 
-portnum = 8765
+try:
+    import websockets
+except:
+    _system(f"python3 -m pip install websockets")
 
-async def _send_recieve(Keys):
-    while True:
-        try:
-            uri = f"ws://localhost:{portnum}"
-            async with websockets.connect(uri) as websocket:
-                await websocket.send(decoder.encode(Keys))
-                Keys = decoder.decode(await websocket.recv())  # type: ignore
-        except:
-            None
+try:
+    import json as js
+except:
+    _system(f"python3 -m pip install json")
 
-def runClient(Keys):
-    asyncio.run(_send_recieve(Keys))
-    print('started client')
+var1 = None
+var2 = None
+devMode = True
+
+serverContents = []
+portNum = 8765
+
+if not devMode:
+    ip = "wss://maybebroken.loca.lt"
+else:
+    hostname = socket.gethostname()
+    IPAddr = socket.gethostbyname(hostname)
+    ip = f"ws://{IPAddr}:8765"
+
+
+async def _send_recieve(data):
+    global var1, var2
+    async with websockets.connect(ip) as websocket:
+        encoder = js.encoder.JSONEncoder()
+        if data == "!!#death":
+            await websocket.send("!!#death")
+            var1 = await websocket.recv()
+
+
+def runClient(data):
+    try:
+        asyncio.run(_send_recieve(data))
+    except:
+        for i in range(5):
+            try:
+                asyncio.run(_send_recieve(data))
+                break
+            except:
+                ...
