@@ -21,7 +21,7 @@ serverContents = []
 portNum = 8765
 
 if not devMode:
-    ip = "wss://maybebroken.loca.lt"
+    ip = f"wss://{input('ip: ')}:{input('port: ')}"
 else:
     hostname = socket.gethostname()
     IPAddr = socket.gethostbyname(hostname)

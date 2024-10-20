@@ -319,6 +319,8 @@ class GUI:
             fg=(1, 1, 1, 1),
         )
         self.main.displayOverlay = DirectFrame(parent=self.guiFrame)
+        self.main.droneTargetIndicator = DirectFrame(parent=self.main.displayOverlay)
+        self.main.droneTargetList = []
 
     def miniMap(self):
         self.mapFrame = DirectFrame(

@@ -138,6 +138,8 @@ class Main(ShowBase):
 
         # end of setup tasks
         self.update_time = 0
+        self.currentDroneCount = Wvars.droneNum
+        self.lastDroneCount = 0
         self.taskMgr.add(self.update, "update")
         self.taskMgr.add(self.sync, "syncServer+Client")
 
@@ -173,8 +175,8 @@ class Main(ShowBase):
         self.HpIndicator["range"] = Wvars.shipHealth
         self.HpIndicator["value"] = Wvars.shipHitPoints
         ai.setupShipHealth(self.HpIndicator)
-        self.voyager.flattenLight()
         self.render.prepareScene(self.win.getGsg())
+        self.voyager.flattenLight()
 
     def startPlayer(self, media_file, name):
         self.tex[name] = MovieTexture("name")
@@ -230,9 +232,23 @@ class Main(ShowBase):
                 self.check_resume()
         else:
             ai.update(AIworld=self.AIworld, aiChars=self.aiChars, ship=self.ship)
-            self.droneCount.setText(
-                f'Drones Remaining: {len(list(_ai for _ai in self.aiChars if _ai["active"]))}'
+            self.currentDroneCount = len(
+                list(_ai for _ai in self.aiChars if _ai["active"])
             )
+            self.droneCount.setText(f"Drones Remaining: {self.currentDroneCount}")
+            if self.currentDroneCount != self.lastDroneCount:
+                for node in self.droneTargetIndicator.getChildren():
+                    node.destroy()
+                for char in self.aiChars:
+                    node = char["mesh"]
+                    img = OnscreenImage(
+                        image=self.loader.loadTexture("src/textures/raw/target.png"),
+                        pos=(0, -2, 0),
+                        scale=4,
+                        parent=node,
+                    )
+                    img.setTransparency(1)
+                    self.droneTargetList.append([node, img])
 
             # update velocities
             if self.update_time > 4:
@@ -523,7 +539,7 @@ class Main(ShowBase):
         slight = Spotlight("slight")
         slight.setColor((2, 2, 2, 1))
         lens = OrthographicLens()
-        lens.setFov(140)
+        lens.setFocalLength(20)
         slight.setLens(lens)
 
         self.SceneLightNode_sm = self.render.attachNewNode(slight)

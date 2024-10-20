@@ -109,21 +109,16 @@ class Main(ShowBase):
         self.startGui()
         # end of setup tasks
 
-        self.taskMgr.add(self.update, "update")
-
     def update(self, task):
         result = task.cont
-        try:
-            if server.cliDead:
-                self.relaunchButton.setFrameColor((1, 1, 1, 1))
-            else:
-                self.relaunchButton.setFrameColor((0.2, 0.2, 0.2, 1))
-        except:
-            None
+        if server.cliDead:
+            self
+        else:
+            self
         # do all systems updates
 
         dt = globalClock.getDt()  # type: ignore
-        physics.physicsMgr.updateWorldPositions(physics.physicsMgr)
+        physics.physicsMgr().updateWorldPositions()
 
         # move cursor to stay within screen bounds
         md = self.win.getPointer(0)
@@ -333,9 +328,6 @@ class Main(ShowBase):
             args=[
                 self.startupLoaderFrame,
                 50,
-                None,
-                None,
-                None,
             ],
             daemon=True,
         ).start()
@@ -344,11 +336,20 @@ class Main(ShowBase):
         self.taskMgr.add(self.setupMainframe)
 
     def fadeOutGuiElement_ThreadedOnly(
-        self, element, timeToFade, execBeforeOrAfter, target, args=()
+        self,
+        element,
+        timeToFade,
+        execBeforeOrAfter=None,
+        target=None,
+        args=(),
+        kwArgs={},
     ):
+        element.set_transparency(1)
         if execBeforeOrAfter == "Before":
-            target(*args)
-
+            if len(args) > 0:
+                target(*args)
+            else:
+                target(**kwArgs)
         for i in range(timeToFade):
             val = 1 - (1 / timeToFade) * (i + 1)
             try:
@@ -358,21 +359,37 @@ class Main(ShowBase):
             t.sleep(0.01)
         element.hide()
         if execBeforeOrAfter == "After":
-            target(*args)
+            if len(args) > 0:
+                target(*args)
+            else:
+                target(**kwArgs)
 
     def fadeInGuiElement_ThreadedOnly(
-        self, element, timeToFade, execBeforeOrAfter, target, args=()
+        self,
+        element,
+        timeToFade,
+        execBeforeOrAfter=None,
+        target=None,
+        args=(),
+        kwArgs={},
     ):
-        if execBeforeOrAfter == "Before":
-            target(*args)
-
         element.show()
+        element.set_transparency(1)
+        if execBeforeOrAfter == "Before":
+            if len(args) > 0:
+                target(*args)
+            else:
+                target(**kwArgs)
+
         for i in range(timeToFade):
             val = abs(0 - (1 / timeToFade) * (i + 1))
             element.setAlphaScale(val)
             t.sleep(0.01)
         if execBeforeOrAfter == "After":
-            target(*args)
+            if len(args) > 0:
+                target(*args)
+            else:
+                target(**kwArgs)
 
     def showGuiFrame(self):
         self.guiFrame.show()
@@ -383,26 +400,68 @@ class Main(ShowBase):
     def setupMainframe(self, task):
         if self.readyContinue >= self.continueCount:
             thread.Thread(target=server.startServer).start()
-
-            def setReady():
-                server.sendRespawn = True
-
-            self.relaunchButton = DirectButton(
-                parent=self.aspect2d, text="respawn", command=setReady, scale=0.2
-            )
             thread.Thread(
                 target=self.fadeOutGuiElement_ThreadedOnly,
-                args=[
-                    self.startupLoaderFrame,
-                    50,
-                    None,
-                    None,
-                    None,
-                ],
+                kwargs={
+                    "element": self.guiFrame,
+                    "timeToFade": 80,
+                    "execBeforeOrAfter": "After",
+                    "target": self.alertReady,
+                },
             ).start()
+            self.readyLoad = False
+            self.taskMgr.add(self.awaitStartTask)
         else:
             self.continueCount += 1
             return task.cont
+
+    def alertReady(self):
+        self.readyLoad = True
+
+    def awaitStartTask(self, task):
+        if self.readyLoad:
+            self.loadFinal()
+        else:
+            return task.cont
+
+    def loadFinal(self):
+        for node in self.guiFrame.getChildren():
+            node.removeNode()
+
+        def setReady():
+            server.sendRespawn = True
+
+        self.relaunchButton = DirectButton(
+            parent=self.guiFrame,
+            pos=(-0.7 * monitor[0].width / monitor[0].height, 0, 0.3),
+            scale=(0.12 * (553 / 194), 1, 0.12),
+            relief=DGG.FLAT,
+            image=spriteSheet["exitButton"],
+            geom=None,
+            frameColor=(1.0, 1.0, 1.0, 0.0),
+            command=sys.exit,
+        )
+        self.startupMenuCreditsText = OnscreenText(
+            "Programmed by David Sponseller",
+            pos=(-0.8 * monitor[0].width / monitor[0].height, -0.95),
+            scale=0.04,
+            parent=self.guiFrame,
+            fg=(0.5, 7, 7, 0.75),
+        )
+        self.startupMenuBackgroundImage3 = OnscreenImage(
+            parent=self.guiFrame,
+            image=spriteSheet["flightDirector"],
+            scale=(0.05 * (569 / 127), 1, 0.05),
+            pos=(-0.86 * monitor[0].width / monitor[0].height, 0, 0.95),
+        )
+        thread.Thread(
+            target=self.fadeInGuiElement_ThreadedOnly,
+            kwargs={
+                "element": self.guiFrame,
+                "timeToFade": 80,
+            },
+        ).start()
+        self.taskMgr.add(self.update, "update")
 
 
 Main().run()
