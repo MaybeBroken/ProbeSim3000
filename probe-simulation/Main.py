@@ -159,12 +159,18 @@ class Main(ShowBase):
         self.render.prepareScene(self.win.getGsg())
         self.voyager.flattenLight()
 
+    def configIp(ip):
+        cli.serveIPAddr = ip
+        cli.serveIp = f"ws://{ip}:8765"
+        print("config succesful")
+
     def startPlayer(self, media_file, name):
         self.tex[name] = MovieTexture("name")
         success = self.tex[name].read(media_file)
         try:
             assert success, "Failed to load video!"
-        except:...
+        except:
+            ...
         cm = CardMaker("fullscreenCard")
         cm.setFrameFullscreenQuad()
         cm.setUvRange(self.tex[name])

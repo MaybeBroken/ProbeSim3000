@@ -271,6 +271,14 @@ class settingsScreen:
             pos=(0.25, 0, -0.3),
             command=updateGuiValues,
         )
+        self.ipEntry = DirectEntry(
+            parent=self.settingsFrame,
+            scale=0.05,
+            pos=(0.05, 0, -0.4),
+            initialText="IP",
+            cursorKeys=True,
+            focusOutCommand=self.configIp,
+        )
 
 
 class GUI:

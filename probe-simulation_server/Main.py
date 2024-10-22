@@ -439,9 +439,9 @@ class Main(ShowBase):
         def setReady():
             if server.cliDead:
                 server.sendRespawn = True
-            
+
         def destroyProbe():
-            server.cliKill=True
+            server.cliKill = True
 
         self.relaunchButton = DirectButton(
             parent=self.guiFrame,

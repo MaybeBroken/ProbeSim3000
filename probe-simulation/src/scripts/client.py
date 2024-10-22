@@ -22,13 +22,14 @@ serverContents = []
 portNum = 8765
 
 hostname = socket.gethostname()
-IPAddr = socket.gethostbyname(hostname)
-ip = f"ws://{IPAddr}:8765"
+
+serveIPAddr = "localhost"
+serveIp = f"ws://{serveIPAddr}:8765"
 
 
 async def _send_recieve(data):
     global var1, var2
-    async with websockets.connect(ip) as websocket:
+    async with websockets.connect(serveIp) as websocket:
         encoder = js.encoder.JSONEncoder()
         if data == "!!#death":
             await websocket.send("!!#death")
@@ -42,12 +43,13 @@ async def _send_recieve(data):
 
 
 def runClient(data):
-    try:
+    #try:
         asyncio.run(_send_recieve(data))
-    except:
-        for i in range(5):
-            try:
-                asyncio.run(_send_recieve(data))
-                break
-            except:
-                ...
+    #except:
+        # for i in range(5):
+        #     try:
+        #         asyncio.run(_send_recieve(data))
+        #         break
+        #     except:
+        #         ...
+        # print('send err')
