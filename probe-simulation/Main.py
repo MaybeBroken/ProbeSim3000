@@ -414,6 +414,8 @@ class Main(ShowBase):
     def resume(self):
         self.pauseFrame.destroy()
         self.death.hide()
+        self.HpIndicator["range"] = Wvars.shipHealth
+        self.HpIndicator["value"] = Wvars.shipHitPoints
         self.reviveInput()
         self.fullStop()
         ai.resumeAll(self.aiChars, self.ship)

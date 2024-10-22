@@ -112,9 +112,9 @@ class Main(ShowBase):
     def update(self, task):
         result = task.cont
         if server.cliDead:
-            self
+            self.relaunchButton["image"] = spriteSheet["respawnReady"]
         else:
-            self
+            self.relaunchButton["image"] = spriteSheet["respawnDefault"]
         # do all systems updates
 
         dt = globalClock.getDt()  # type: ignore
@@ -221,6 +221,12 @@ class Main(ShowBase):
         )
         spriteSheet["flightDirector"] = self.loader.loadTexture(
             texturePath="src/textures/raw/flightDirectorTile.png",
+        )
+        spriteSheet["respawnDefault"] = self.loader.loadTexture(
+            texturePath="src/textures/raw/respawn_default.png",
+        )
+        spriteSheet["respawnReady"] = self.loader.loadTexture(
+            texturePath="src/textures/raw/respawn_ready.png",
         )
 
     def loadAllTextures(self):
@@ -429,26 +435,44 @@ class Main(ShowBase):
             node.removeNode()
 
         def setReady():
-            server.sendRespawn = True
+            if server.cliDead:
+                server.sendRespawn = True
 
         self.relaunchButton = DirectButton(
             parent=self.guiFrame,
-            pos=(-0.7 * monitor[0].width / monitor[0].height, 0, 0.3),
-            scale=(0.12 * (553 / 194), 1, 0.12),
+            pos=(-0.0 * monitor[0].width / monitor[0].height, 0, 0.8),
+            scale=(0.12 * (1005 / 404), 1, 0.12),
             relief=DGG.FLAT,
-            image=spriteSheet["exitButton"],
+            image=spriteSheet["respawnDefault"],
             geom=None,
             frameColor=(1.0, 1.0, 1.0, 0.0),
-            command=sys.exit,
+            command=setReady,
         )
-        self.startupMenuCreditsText = OnscreenText(
+        self.CreditsText = OnscreenText(
             "Programmed by David Sponseller",
             pos=(-0.8 * monitor[0].width / monitor[0].height, -0.95),
             scale=0.04,
             parent=self.guiFrame,
             fg=(0.5, 7, 7, 0.75),
         )
-        self.startupMenuBackgroundImage3 = OnscreenImage(
+        self.IpAddrText = OnscreenText(
+            text=f"Server address + port\n{server.IPAddr} : 8765\n{server.hostname} : 8765",
+            pos=(0 * monitor[0].width / monitor[0].height, -0.8),
+            scale=0.06,
+            parent=self.guiFrame,
+            fg=(0.5, 7, 7, 0.75),
+        )
+        self.QuitButton = DirectButton(
+            parent=self.guiFrame,
+            pos=(-0.8 * monitor[0].width / monitor[0].height, 0, -0.7),
+            scale=(0.1099 * (553 / 194), 1, 0.11),
+            relief=DGG.FLAT,
+            image=spriteSheet["exitButton"],
+            geom=None,
+            frameColor=(1.0, 1.0, 1.0, 0.0),
+            command=sys.exit,
+        )
+        self.BackgroundImage3 = OnscreenImage(
             parent=self.guiFrame,
             image=spriteSheet["flightDirector"],
             scale=(0.05 * (569 / 127), 1, 0.05),

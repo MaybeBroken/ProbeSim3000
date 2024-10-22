@@ -6,7 +6,8 @@ import socket
 
 cliDead = False
 sendRespawn = False
-
+hostname = socket.gethostname()
+IPAddr = socket.gethostbyname(hostname)
 
 async def _echo(websocket):
     global cliDead, sendRespawn
@@ -24,6 +25,7 @@ async def _echo(websocket):
 
 
 async def _buildServe():
+    global hostname, IPAddr
     hostname = socket.gethostname()
     IPAddr = socket.gethostbyname(hostname)
     async with websockets.serve(_echo, IPAddr, 8765):
