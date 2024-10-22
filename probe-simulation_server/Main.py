@@ -461,7 +461,7 @@ class Main(ShowBase):
             image=spriteSheet["destroy"],
             geom=None,
             frameColor=(1.0, 1.0, 1.0, 0.0),
-            command=setReady,
+            command=destroyProbe,
         )
         self.stuffButton = DirectButton(
             parent=self.guiFrame,

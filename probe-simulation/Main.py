@@ -139,7 +139,7 @@ class Main(ShowBase):
         #
 
         self.static = self.startPlayer(
-            media_file="src/movies/GUI/static.mp4", name="static"
+            media_file="src/movies/GUI/death.mp4", name="static"
         )
         self.static.setTransparency(True)
         self.static.setAlphaScale(0)
@@ -162,7 +162,9 @@ class Main(ShowBase):
     def startPlayer(self, media_file, name):
         self.tex[name] = MovieTexture("name")
         success = self.tex[name].read(media_file)
-        assert success, "Failed to load video!"
+        try:
+            assert success, "Failed to load video!"
+        except:...
         cm = CardMaker("fullscreenCard")
         cm.setFrameFullscreenQuad()
         cm.setUvRange(self.tex[name])
@@ -188,9 +190,11 @@ class Main(ShowBase):
         return task.cont
 
     doneDeath = False
+
     def syncClient(self):
         while True:
-            cli.runClient("!!#death")
+            t.sleep(0.5)
+            cli.runClient("!!#update")
 
     def update(self, task):
         result = task.cont
@@ -510,8 +514,14 @@ class Main(ShowBase):
         self.skybox = self.loader.loadModel("src/models/skybox/stars.egg")
         self.ship = self.loader.loadModel("src/models/simple_ship/model.egg")
         self.skybox2 = self.loader.loadModel("src/models/skybox/stars.egg")
-        self.voyager = self.loader.loadModel("src/models/voyager/voyager.bam")
-        self.drone = self.loader.loadModel("src/models/drone/drone.bam")
+        try:
+            self.voyager = self.loader.loadModel("src/models/voyager/voyager.bam")
+        except:
+            self.voyager = self.loader.loadModel("src/models/drone/cube.egg")
+        try:
+            self.drone = self.loader.loadModel("src/models/drone/drone.bam")
+        except:
+            self.drone = self.loader.loadModel("src/models/drone/cube.egg")
         self.starNode = NodePath("starNode")
         self.starNode.reparentTo(self.render)
         disp.GUI.setup(disp.GUI)
@@ -642,7 +652,7 @@ class Main(ShowBase):
         self.AIworld = AIWorld(self.render)
         self.aiChars = []
         for num in range(Wvars.droneNum):
-            dNode = self.loader.loadModel("src/models/drone/drone.bam")
+            dNode = self.loader.loadModel("src/models/drone/cube.egg")
             dNode.instanceTo(self.droneMasterNode)
             dNode.setPos(randint(-500, 500), randint(-400, 300), randint(-50, 50))
             dNode.setScale(3)
