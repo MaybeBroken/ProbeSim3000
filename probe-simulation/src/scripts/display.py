@@ -250,7 +250,7 @@ class settingsScreen:
             parent=self.settingsFrame,
             scale=0.05,
             pos=(0.05, 0, -0.05),
-            initialText="5",
+            initialText="0",
             cursorKeys=True,
             focusOutCommand=updateGuiValues,
         )

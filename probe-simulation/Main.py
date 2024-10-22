@@ -20,37 +20,24 @@ from panda3d.ai import AIWorld, AICharacter, Flock
 from panda3d.core import *
 from panda3d.core import (
     TransparencyAttrib,
-    Texture,
-    DirectionalLight,
     AmbientLight,
     loadPrcFile,
     ConfigVariableString,
-    AudioSound,
     AntialiasAttrib,
-    GeomVertexReader,
     WindowProperties,
     NodePath,
-    TextNode,
-    CullFaceAttrib,
     Spotlight,
-    PerspectiveLens,
-    SphereLight,
-    PointLight,
     OrthographicLens,
-    Point3,
-    OccluderNode,
     CollisionTraverser,
     CollisionNode,
     CollisionBox,
     CollisionSphere,
     CollisionRay,
     CollisionHandlerQueue,
-    Vec3,
     Vec4,
     CollisionHandlerPusher,
     MovieTexture,
     CardMaker,
-    ShowBoundsEffect,
 )
 
 from direct.gui.OnscreenImage import OnscreenImage
@@ -162,13 +149,6 @@ class Main(ShowBase):
         self.death.setTransparency(True)
         self.death.hide()
         self.playTex("death")
-
-        # droneBounds = ShowBoundsEffect.make()
-        # for char in self.aiChars:
-        #     node = char['mesh']
-        #     node.setEffect(droneBounds)
-
-        #
 
         self.velocityMeter.hide()
         self.posMeter.hide()
