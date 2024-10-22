@@ -11,8 +11,8 @@ camH = 0
 camP = 0
 camR = 0
 
-winMode = "full-win"
-resolution = [800, 600]
+winMode = "win"
+resolution = [1600, 1000]
 
 cursorLock = True
 movementEnabled = True

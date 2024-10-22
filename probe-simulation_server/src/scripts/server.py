@@ -5,9 +5,12 @@ import json
 import socket
 
 cliDead = False
+cliKill = False
 sendRespawn = False
 hostname = socket.gethostname()
 IPAddr = socket.gethostbyname(hostname)
+
+
 
 async def _echo(websocket):
     global cliDead, sendRespawn
@@ -22,6 +25,9 @@ async def _echo(websocket):
                 break
             else:
                 t.sleep(0.25)
+    if msg == "!!#update":
+        if cliKill:
+            await websocket.send("!!killDrone")
 
 
 async def _buildServe():

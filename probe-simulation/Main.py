@@ -129,6 +129,7 @@ class Main(ShowBase):
         self.lastDroneCount = 0
         self.taskMgr.add(self.update, "update")
         self.taskMgr.add(self.sync, "syncServer+Client")
+        thread.Thread(target=self.syncClient).start()
 
     def postLoad(self):
         self.tex = {}
@@ -187,6 +188,9 @@ class Main(ShowBase):
         return task.cont
 
     doneDeath = False
+    def syncClient(self):
+        while True:
+            cli.runClient("!!#death")
 
     def update(self, task):
         result = task.cont

@@ -16,16 +16,14 @@ except:
 var1 = None
 var2 = None
 devMode = True
+serverDeath = False
 
 serverContents = []
 portNum = 8765
 
-if not devMode:
-    ip = f"wss://{input('ip: ')}:{input('port: ')}"
-else:
-    hostname = socket.gethostname()
-    IPAddr = socket.gethostbyname(hostname)
-    ip = f"ws://{IPAddr}:8765"
+hostname = socket.gethostname()
+IPAddr = socket.gethostbyname(hostname)
+ip = f"ws://{IPAddr}:8765"
 
 
 async def _send_recieve(data):
@@ -35,6 +33,12 @@ async def _send_recieve(data):
         if data == "!!#death":
             await websocket.send("!!#death")
             var1 = await websocket.recv()
+        if data == "!!#update":
+            await websocket.send("!!#update")
+            msg = await websocket.recv()
+            if msg == "!!killDrone":
+                global serverDeath
+                serverDeath = True
 
 
 def runClient(data):

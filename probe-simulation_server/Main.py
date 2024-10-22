@@ -78,9 +78,8 @@ if Wvars.winMode == "full":
 
 if Wvars.winMode == "win":
     ConfigVariableString(
-        "win-size",
-        str(int(monitor[0].width / 2)) + " " + str(int(monitor[0].height / 2)),
-    ).setValue(str(int(monitor[0].width / 2)) + " " + str(int(monitor[0].height / 2)))
+        "win-size", str(Wvars.resolution[0]) + " " + str(Wvars.resolution[1])
+    ).setValue(str(Wvars.resolution[0]) + " " + str(Wvars.resolution[1]))
     ConfigVariableString("fullscreen", "false").setValue("false")
     ConfigVariableString("undecorated", "false").setValue("false")
 
@@ -228,6 +227,9 @@ class Main(ShowBase):
         spriteSheet["respawnReady"] = self.loader.loadTexture(
             texturePath="src/textures/raw/respawn_ready.png",
         )
+        spriteSheet["destroy"] = self.loader.loadTexture(
+            texturePath="src/textures/raw/destroy.png",
+        )
 
     def loadAllTextures(self):
         spriteSheet["play_blue"] = self.loader.load_texture(
@@ -268,7 +270,7 @@ class Main(ShowBase):
             pos=(-0.86 * monitor[0].width / monitor[0].height, 0, 0.95),
         )
 
-        startupMenuStartButton = DirectButton(
+        self.startupMenuStartButton = DirectButton(
             parent=self.startupMenuFrame,
             pos=(-0.7 * monitor[0].width / monitor[0].height, 0, 0.6),
             scale=(0.12 * (553 / 194), 1, 0.12),
@@ -288,7 +290,7 @@ class Main(ShowBase):
             ).start,
         )
 
-        startupMenuQuitButton = DirectButton(
+        self.startupMenuQuitButton = DirectButton(
             parent=self.startupMenuFrame,
             pos=(-0.7 * monitor[0].width / monitor[0].height, 0, 0.3),
             scale=(0.12 * (553 / 194), 1, 0.12),
@@ -299,7 +301,7 @@ class Main(ShowBase):
             command=sys.exit,
         )
 
-        startupMenuCreditsText = OnscreenText(
+        self.startupMenuCreditsText = OnscreenText(
             "Programmed by David Sponseller",
             pos=(-0.8 * monitor[0].width / monitor[0].height, -0.95),
             scale=0.04,
@@ -322,7 +324,7 @@ class Main(ShowBase):
             pos=(0, 0, 0.25),
         )
 
-        startupLoaderLoadingText = OnscreenText(
+        self.startupLoaderLoadingText = OnscreenText(
             "Loading...",
             pos=(0 * monitor[0].width / monitor[0].height, -0.5),
             scale=0.05,
@@ -437,10 +439,33 @@ class Main(ShowBase):
         def setReady():
             if server.cliDead:
                 server.sendRespawn = True
+            
+        def destroyProbe():
+            server.cliKill=True
 
         self.relaunchButton = DirectButton(
             parent=self.guiFrame,
             pos=(-0.0 * monitor[0].width / monitor[0].height, 0, 0.8),
+            scale=(0.12 * (1005 / 404), 1, 0.12),
+            relief=DGG.FLAT,
+            image=spriteSheet["respawnDefault"],
+            geom=None,
+            frameColor=(1.0, 1.0, 1.0, 0.0),
+            command=setReady,
+        )
+        self.destroyButton = DirectButton(
+            parent=self.guiFrame,
+            pos=(-0.5 * monitor[0].width / monitor[0].height, 0, 0.8),
+            scale=(0.12 * (1005 / 404), 1, 0.12),
+            relief=DGG.FLAT,
+            image=spriteSheet["destroy"],
+            geom=None,
+            frameColor=(1.0, 1.0, 1.0, 0.0),
+            command=setReady,
+        )
+        self.stuffButton = DirectButton(
+            parent=self.guiFrame,
+            pos=(0.5 * monitor[0].width / monitor[0].height, 0, 0.8),
             scale=(0.12 * (1005 / 404), 1, 0.12),
             relief=DGG.FLAT,
             image=spriteSheet["respawnDefault"],
@@ -478,6 +503,7 @@ class Main(ShowBase):
             scale=(0.05 * (569 / 127), 1, 0.05),
             pos=(-0.86 * monitor[0].width / monitor[0].height, 0, 0.95),
         )
+
         thread.Thread(
             target=self.fadeInGuiElement_ThreadedOnly,
             kwargs={
