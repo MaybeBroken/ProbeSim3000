@@ -139,7 +139,7 @@ class Main(ShowBase):
         #
 
         self.static = self.startPlayer(
-            media_file="src/movies/GUI/death.mp4", name="static"
+            media_file="src/movies/GUI/static.mp4", name="static"
         )
         self.static.setTransparency(True)
         self.static.setAlphaScale(0)
@@ -159,10 +159,10 @@ class Main(ShowBase):
         self.render.prepareScene(self.win.getGsg())
         self.voyager.flattenLight()
 
-    def configIp(ip):
-        cli.serveIPAddr = ip
-        cli.serveIp = f"ws://{ip}:8765"
-        print("config succesful")
+    def configIp(self):
+        cli.serveIPAddr = self.ipEntry.get()
+        cli.serveIp = f"ws://{cli.serveIPAddr}:8765"
+        print(f"config succesful: ip={cli.serveIPAddr}")
 
     def startPlayer(self, media_file, name):
         self.tex[name] = MovieTexture("name")
