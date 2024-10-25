@@ -43,13 +43,13 @@ async def _send_recieve(data):
 
 
 def runClient(data):
-    #try:
+    try:
         asyncio.run(_send_recieve(data))
-    #except:
-        # for i in range(5):
-        #     try:
-        #         asyncio.run(_send_recieve(data))
-        #         break
-        #     except:
-        #         ...
-        # print('send err')
+    except:
+        for i in range(5):
+            try:
+                asyncio.run(_send_recieve(data))
+                break
+            except:
+                ...
+        print("send err")

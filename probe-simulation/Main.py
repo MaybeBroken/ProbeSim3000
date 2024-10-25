@@ -206,7 +206,7 @@ class Main(ShowBase):
         result = task.cont
         playerMoveSpeed = Wvars.speed / 100
         if (
-            self.ship.getDistance(self.voyager) > 14000
+            self.ship.getDistance(self.voyager) > 9000
             or self.HpIndicator["value"] <= 0
         ):
             if not self.doneDeath:
@@ -390,7 +390,7 @@ class Main(ShowBase):
                 if self.progress["value"] < 100:
                     self.progress["value"] += 1
 
-        if self.ship.getDistance(self.voyager) > 5000:
+        if self.ship.getDistance(self.voyager) > 4000:
             self.updateOverlay()
         return result
 
