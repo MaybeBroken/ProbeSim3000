@@ -78,8 +78,15 @@ if Wvars.winMode == "full":
 
 if Wvars.winMode == "win":
     ConfigVariableString(
-        "win-size", str(Wvars.resolution[0]) + " " + str(Wvars.resolution[1])
-    ).setValue(str(Wvars.resolution[0]) + " " + str(Wvars.resolution[1]))
+        "win-size",
+        str(int(monitor[0].width / 2) + int(monitor[0].width / 4))
+        + " "
+        + str(int(monitor[0].height / 2) + int(monitor[0].height / 4)),
+    ).setValue(
+        str(int(monitor[0].width / 2) + int(monitor[0].width / 4))
+        + " "
+        + str(int(monitor[0].height / 2) + int(monitor[0].height / 4)),
+    )
     ConfigVariableString("fullscreen", "false").setValue("false")
     ConfigVariableString("undecorated", "false").setValue("false")
 
@@ -439,6 +446,7 @@ class Main(ShowBase):
         def setReady():
             if server.cliDead:
                 server.sendRespawn = True
+                server.cliKill = False
 
         def destroyProbe():
             server.cliKill = True
@@ -462,16 +470,6 @@ class Main(ShowBase):
             geom=None,
             frameColor=(1.0, 1.0, 1.0, 0.0),
             command=destroyProbe,
-        )
-        self.stuffButton = DirectButton(
-            parent=self.guiFrame,
-            pos=(0.5 * monitor[0].width / monitor[0].height, 0, 0.8),
-            scale=(0.12 * (1005 / 404), 1, 0.12),
-            relief=DGG.FLAT,
-            image=spriteSheet["respawnDefault"],
-            geom=None,
-            frameColor=(1.0, 1.0, 1.0, 0.0),
-            command=setReady,
         )
         self.CreditsText = OnscreenText(
             "Programmed by David Sponseller",

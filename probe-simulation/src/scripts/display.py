@@ -271,14 +271,15 @@ class settingsScreen:
             pos=(0.25, 0, -0.3),
             command=updateGuiValues,
         )
-        self.ipEntry = DirectEntry(
+        self.serverIpTitle = OnscreenText(
+            text=f"Server IP",
             parent=self.settingsFrame,
-            scale=0.05,
-            pos=(0.05, 0, -0.4),
-            initialText="IP",
-            cursorKeys=True,
-            focusOutCommand=self.configIp,
+            scale=0.03,
+            pos=(0.25, -0.45),
+            fg=(1, 1, 1, 1),
+            font=self.loader.loadFont("src/fonts/sector_034.ttf"),
         )
+        
 
 
 class GUI:

@@ -12,7 +12,7 @@ camP = 0
 camR = 0
 
 winMode = "win"
-resolution = [600, 800]
+resolution = [800, 600]
 
 cursorLock = True
 movementEnabled = True

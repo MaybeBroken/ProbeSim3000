@@ -1,8 +1,8 @@
 import asyncio
 import websockets
 import time as t
-import json
 import socket
+import json
 
 cliDead = False
 cliKill = False
@@ -10,6 +10,9 @@ sendRespawn = False
 hostname = socket.gethostname()
 IPAddr = socket.gethostbyname(hostname)
 
+
+def packList():
+    return {"cliKill": cliKill}
 
 
 async def _echo(websocket):
@@ -26,8 +29,7 @@ async def _echo(websocket):
             else:
                 t.sleep(0.25)
     if msg == "!!#update":
-        if cliKill:
-            await websocket.send("!!killDrone")
+        await websocket.send(json.encoder.JSONEncoder().encode(packList()))
 
 
 async def _buildServe():

@@ -65,8 +65,14 @@ if Wvars.winMode == "full":
 if Wvars.winMode == "win":
     ConfigVariableString(
         "win-size",
-        str(int(monitor[0].width / 2)) + " " + str(int(monitor[0].height / 2)),
-    ).setValue(str(int(monitor[0].width / 2)) + " " + str(int(monitor[0].height / 2)))
+        str(int(monitor[0].width / 2) + int(monitor[0].width / 4))
+        + " "
+        + str(int(monitor[0].height / 2) + int(monitor[0].height / 4)),
+    ).setValue(
+        str(int(monitor[0].width / 2) + int(monitor[0].width / 4))
+        + " "
+        + str(int(monitor[0].height / 2) + int(monitor[0].height / 4)),
+    )
     ConfigVariableString("fullscreen", "false").setValue("false")
     ConfigVariableString("undecorated", "false").setValue("false")
 
@@ -81,6 +87,14 @@ class Main(ShowBase):
         self.accept("q", sys.exit)
         disp.monitor = monitor
         disp.settingsScreen.start(self)
+        self.ipEntry = DirectEntry(
+            parent=self.settingsFrame,
+            scale=0.05,
+            pos=(0.05, 0, -0.55),
+            initialText=cli.serveIPAddr,
+            cursorKeys=True,
+            focusOutCommand=self.configIp,
+        )
 
     def load(self):
         self.guiFrame.hide()
@@ -129,7 +143,6 @@ class Main(ShowBase):
         self.lastDroneCount = 0
         self.taskMgr.add(self.update, "update")
         self.taskMgr.add(self.sync, "syncServer+Client")
-        thread.Thread(target=self.syncClient).start()
 
     def postLoad(self):
         self.tex = {}
@@ -197,22 +210,18 @@ class Main(ShowBase):
 
     doneDeath = False
 
-    def syncClient(self):
-        while True:
-            t.sleep(0.5)
-            cli.runClient("!!#update")
-
     def update(self, task):
         result = task.cont
         playerMoveSpeed = Wvars.speed / 100
         if (
             self.ship.getDistance(self.voyager) > 9000
             or self.HpIndicator["value"] <= 0
+            or cli.serverDeath
         ):
             if not self.doneDeath:
                 self.doneDeath = True
                 self.ship.setPos(0, 0, 0)
-                self.fullStop()
+                physics.physicsMgr.removeObject(physics.physicsMgr, self.ship, "ship")
                 self.updateOverlay()
                 self.silenceInput()
                 ai.pauseAll(self.aiChars)
@@ -222,7 +231,7 @@ class Main(ShowBase):
                     frameColor=(0, 0, 0, 1),
                 )
                 self.death.show()
-                self.fullStop()
+                thread.Thread(target=cli.runClient, args=["!!#death"]).start()
                 self.check_resume()
         else:
             ai.update(AIworld=self.AIworld, aiChars=self.aiChars, ship=self.ship)
@@ -246,27 +255,31 @@ class Main(ShowBase):
 
             # update velocities
             if self.update_time > 4:
+                cli.runClient("!!#update")
                 self.update_time = 0
-                self.velocity = physics.physicsMgr.getObjectVelocity(
-                    physics.physicsMgr, self.ship, "ship"
-                )
-                self.vel_text = (
-                    "Thrust: "
-                    + str(
-                        round(
-                            number=(
-                                ((round(abs(self.velocity[0]) * 1000)) ^ 2)
-                                + ((round(abs(self.velocity[1]) * 1000)) ^ 2)
-                                + ((round(abs(self.velocity[2]) * 1000)) ^ 2) / 1000
-                            )
-                            - 4,
-                            ndigits=2,
-                        )
+                try:
+                    self.velocity = physics.physicsMgr.getObjectVelocity(
+                        physics.physicsMgr, self.ship, "ship"
                     )
-                    + " km/s"
-                )
-                self.velocityMeter.configure(text=self.vel_text)
-                self.posMeter.configure(text="pos XYZ: " + str(self.ship.getPos()))
+                    self.vel_text = (
+                        "Thrust: "
+                        + str(
+                            round(
+                                number=(
+                                    ((round(abs(self.velocity[0]) * 1000)) ^ 2)
+                                    + ((round(abs(self.velocity[1]) * 1000)) ^ 2)
+                                    + ((round(abs(self.velocity[2]) * 1000)) ^ 2) / 1000
+                                )
+                                - 4,
+                                ndigits=2,
+                            )
+                        )
+                        + " km/s"
+                    )
+                    self.velocityMeter.configure(text=self.vel_text)
+                    self.posMeter.configure(text="pos XYZ: " + str(self.ship.getPos()))
+                except:
+                    ...
             else:
                 self.update_time += 1
 
@@ -397,8 +410,8 @@ class Main(ShowBase):
     def check_resume(self):
         def _loop():
             while True:
-                cli.runClient("!!#death")
-                if cli.var1:
+                cli.runClient("!!#update")
+                if cli.var1 or not cli.serverDeath:
                     self.resume()
                     break
                 t.sleep(1)
@@ -411,7 +424,9 @@ class Main(ShowBase):
         self.HpIndicator["range"] = Wvars.shipHealth
         self.HpIndicator["value"] = Wvars.shipHitPoints
         self.reviveInput()
-        self.fullStop()
+        physics.physicsMgr.registerObject(
+            physics.physicsMgr, self.ship, [0, 0, 0], "ship"
+        )
         ai.resumeAll(self.aiChars, self.ship)
         self.doneDeath = False
 

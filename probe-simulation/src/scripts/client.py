@@ -23,12 +23,12 @@ portNum = 8765
 
 hostname = socket.gethostname()
 
-serveIPAddr = "localhost"
+serveIPAddr = socket.gethostbyname(hostname)
 serveIp = f"ws://{serveIPAddr}:8765"
 
 
 async def _send_recieve(data):
-    global var1, var2
+    global var1, var2, serverDeath
     async with websockets.connect(serveIp) as websocket:
         encoder = js.encoder.JSONEncoder()
         if data == "!!#death":
@@ -36,20 +36,23 @@ async def _send_recieve(data):
             var1 = await websocket.recv()
         if data == "!!#update":
             await websocket.send("!!#update")
-            msg = await websocket.recv()
-            if msg == "!!killDrone":
-                global serverDeath
+            msg = js.decoder.JSONDecoder().decode(await websocket.recv())
+            if msg["cliKill"]:
                 serverDeath = True
+            else:
+                serverDeath = False
 
 
 def runClient(data):
-    try:
+    if data == "!!#update":
         asyncio.run(_send_recieve(data))
-    except:
-        for i in range(5):
-            try:
-                asyncio.run(_send_recieve(data))
-                break
-            except:
-                ...
-        print("send err")
+    else:
+        try:
+            asyncio.run(_send_recieve(data))
+        except:
+            for i in range(5):
+                try:
+                    asyncio.run(_send_recieve(data))
+                    break
+                except:
+                    ...
