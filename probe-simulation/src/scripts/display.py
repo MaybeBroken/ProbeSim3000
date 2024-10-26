@@ -18,7 +18,7 @@ class ShaderCall:
             mainApp.render.setShaderAuto()
             filters = CommonFilters(mainApp.win, mainApp.cam)
             filters.setBloom(
-                (0.3, 0.4, 0.3, 0.8),
+                blend=(0.3, 0.4, 0.3, 0.8),
                 mintrigger=0.1,
                 maxtrigger=1,
                 desat=0.1,
@@ -28,7 +28,8 @@ class ShaderCall:
             # filters.setAmbientOcclusion()
             filters.setSrgbEncode()
             filters.setHighDynamicRange()
-            # filters.setBlurSharpen(1.5)
+            filters.setBlurSharpen(1.25)
+        ...
 
 
 class settingsScreen:
@@ -279,7 +280,6 @@ class settingsScreen:
             fg=(1, 1, 1, 1),
             font=self.loader.loadFont("src/fonts/sector_034.ttf"),
         )
-        
 
 
 class GUI:

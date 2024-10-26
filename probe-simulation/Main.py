@@ -432,7 +432,7 @@ class Main(ShowBase):
 
     def updateOverlay(self):
         self.static.setAlphaScale(
-            1 / (9000 / (self.ship.getDistance(self.voyager) - 6000))
+            1 / (6000 / (self.ship.getDistance(self.voyager) - 4000))
         )
 
     def setupControls(self):
@@ -543,8 +543,6 @@ class Main(ShowBase):
             self.drone = self.loader.loadModel("src/models/drone/drone.bam")
         except:
             self.drone = self.loader.loadModel("src/models/drone/cube.egg")
-        self.starNode = NodePath("starNode")
-        self.starNode.reparentTo(self.render)
         disp.GUI.setup(disp.GUI)
 
     def setupLights(self):
@@ -713,32 +711,10 @@ class Main(ShowBase):
             ai.fireLoop(self.ship, aiObject)
 
     def setupScene(self):
-        # setup sun
-        nodeScale = 5000
-        sunNode = NodePath("sun")
-        # sunNode.reparentTo(self.starNode)
-        self.starNode.setPos(100000, 0, 10000)
-        self.starNode.setScale(nodeScale)
-        self.sun.setTexture(
-            self.loader.loadTexture(
-                texturePath="src/textures/sun variants/" + str(randint(0, 3)) + ".png"
-            )
-        )
-        self.sun.instanceTo(sunNode)
+
         droneNode = CollisionSphere(0, 0, 0, 1)
         droneNodeSolid = CollisionNode("block-collision-node")
         droneNodeSolid.addSolid(droneNode)
-
-        collider = sunNode.attachNewNode(droneNodeSolid)
-        collider.setPythonTag("owner", sunNode)
-
-        fromObject = sunNode.attachNewNode(CollisionNode("colNode"))
-        fromObject.node().addSolid(CollisionSphere(0, 0, 0, 3.375))
-        fromObject.node().set_from_collide_mask(0)
-        fromObject.node().setPythonTag("owner", sunNode)
-        pusher = CollisionHandlerPusher()
-        pusher.addCollider(fromObject, sunNode)
-        self.cTrav.addCollider(fromObject, pusher)
 
         self.voyager.reparentTo(self.render)
         self.voyager.setScale(280)
