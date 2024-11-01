@@ -50,4 +50,4 @@ def startServer(port):
         try:
             asyncio.run(_buildServe(port))
         except:
-            ...
+            print("cli err")
