@@ -28,20 +28,26 @@ async def _echo(websocket):
                 break
             else:
                 t.sleep(0.25)
-    if msg == "!!#update":
+    elif msg == "!!#update":
+        await websocket.send(json.encoder.JSONEncoder().encode(packList()))
+    elif msg == "!!#admin":
         await websocket.send(json.encoder.JSONEncoder().encode(packList()))
 
 
-async def _buildServe():
+async def _buildServe(port):
     global hostname, IPAddr
     hostname = socket.gethostname()
     IPAddr = socket.gethostbyname(hostname)
-    async with websockets.serve(_echo, IPAddr, 8765):
+    async with websockets.serve(_echo, IPAddr, port):
         print(
             f"*********\n:SERVER(notice): listening on url: [{IPAddr}:8765]\n*********"
         )
         await asyncio.Future()
 
 
-def startServer():
-    asyncio.run(_buildServe())
+def startServer(port):
+    while True:
+        try:
+            asyncio.run(_buildServe(port))
+        except:
+            ...

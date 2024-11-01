@@ -414,7 +414,8 @@ class Main(ShowBase):
 
     def setupMainframe(self, task):
         if self.readyContinue >= self.continueCount:
-            thread.Thread(target=server.startServer).start()
+            thread.Thread(target=server.startServer, args=[8765]).start()
+            thread.Thread(target=server.startServer, args=[8766]).start()
             thread.Thread(
                 target=self.fadeOutGuiElement_ThreadedOnly,
                 kwargs={
