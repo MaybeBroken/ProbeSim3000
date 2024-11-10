@@ -14,9 +14,9 @@ import src.scripts.guiUtils as guiUtils
 
 from screeninfo import get_monitors
 from direct.showbase.ShowBase import ShowBase
+
 from panda3d.ai import *
 from panda3d.ai import AIWorld, AICharacter, Flock
-
 from panda3d.core import *
 from panda3d.core import (
     TransparencyAttrib,
