@@ -12,26 +12,31 @@ IPAddr = socket.gethostbyname(hostname)
 
 
 def packList():
-    return {"cliKill": cliKill}
+    return {
+        "cliKill": cliKill,
+        "cliDead": cliDead,
+        "sendRespawn": sendRespawn,
+    }
 
 
 async def _echo(websocket):
-    global cliDead, sendRespawn
-    msg = await websocket.recv()
-    if msg == "!!#death":
-        cliDead = True
-        while cliDead:
-            if sendRespawn:
-                await websocket.send("!!#respawn")
-                sendRespawn = False
-                cliDead = False
-                break
+    running = True
+    while running:
+        try:
+            global cliDead, sendRespawn, cliKill
+            msg = json.decoder.JSONDecoder().decode(await websocket.recv())
+            if msg["cliDead"]:
+                cliDead = True
+                cliKill = False
             else:
-                t.sleep(0.25)
-    elif msg == "!!#update":
-        await websocket.send(json.encoder.JSONEncoder().encode(packList()))
-    elif msg == "!!#admin":
-        await websocket.send(json.encoder.JSONEncoder().encode(packList()))
+                cliDead = False
+                sendRespawn = False
+                cliKill = False
+            await websocket.send(json.encoder.JSONEncoder().encode(packList()))
+            # if sendRespawn:
+            #     sendRespawn = False
+        except:
+            ...
 
 
 async def _buildServe(port):
@@ -40,7 +45,7 @@ async def _buildServe(port):
     IPAddr = socket.gethostbyname(hostname)
     async with websockets.serve(_echo, IPAddr, port):
         print(
-            f"*********\n:SERVER(notice): listening on url: [{IPAddr}:8765]\n*********"
+            f"*********\n:SERVER(notice): listening on url: [{IPAddr}:{port}]\n*********"
         )
         await asyncio.Future()
 
@@ -50,4 +55,4 @@ def startServer(port):
         try:
             asyncio.run(_buildServe(port))
         except:
-            print("cli err")
+            print("server err @ <Main.Thread.server -> 51>")

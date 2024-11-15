@@ -123,51 +123,6 @@ class Main(ShowBase):
             self.relaunchButton["image"] = spriteSheet["respawnDefault"]
         # do all systems updates
 
-        dt = globalClock.getDt()  # type: ignore
-        physics.physicsMgr().updateWorldPositions()
-
-        # move cursor to stay within screen bounds
-        md = self.win.getPointer(0)
-        mouseX = md.getX()
-        mouseY = md.getY()
-        if Wvars.cursorLock == True:
-            if int(monitor[0].width / 2) - mouseX >= int(monitor[0].width / 4):
-                self.win.movePointer(0, x=int(monitor[0].width / 2), y=int(mouseY))
-                self.lastMouseX = int(monitor[0].width / 2)
-            elif int(monitor[0].width / 2) - mouseX <= -int(monitor[0].width / 4):
-                self.win.movePointer(0, x=int(monitor[0].width / 2), y=int(mouseY))
-                self.lastMouseX = int(monitor[0].width / 2)
-            elif int(monitor[0].height / 2) - mouseY >= int(monitor[0].height / 4):
-                self.win.movePointer(0, x=int(mouseX), y=int(monitor[0].height / 2))
-                self.lastMouseY = int(monitor[0].height / 2)
-            elif int(monitor[0].height / 2) - mouseY <= -int(monitor[0].height / 4):
-                self.win.movePointer(0, x=int(mouseX), y=int(monitor[0].height / 2))
-                self.lastMouseY = int(monitor[0].height / 2)
-
-            else:
-                # move camera based on mouse position
-                mouseChangeX = mouseX - self.lastMouseX
-                mouseChangeY = mouseY - self.lastMouseY
-
-                self.cameraSwingFactor = Wvars.swingSpeed / 10
-
-                currentH = self.camNodePath.getH()
-                currentP = self.camNodePath.getP()
-                currentR = self.camNodePath.getR()
-
-                Wvars.camH = currentH
-                Wvars.camP = currentP
-                Wvars.camR = currentR
-
-                self.camNodePath.setHpr(
-                    currentH - mouseChangeX * dt * self.cameraSwingFactor,
-                    currentP - mouseChangeY * dt * self.cameraSwingFactor,
-                    0,
-                )
-
-                self.lastMouseX = mouseX
-                self.lastMouseY = mouseY
-
         return result
 
     def setupControls(self):
@@ -415,7 +370,6 @@ class Main(ShowBase):
     def setupMainframe(self, task):
         if self.readyContinue >= self.continueCount:
             thread.Thread(target=server.startServer, args=[8765]).start()
-            thread.Thread(target=server.startServer, args=[8766]).start()
             thread.Thread(
                 target=self.fadeOutGuiElement_ThreadedOnly,
                 kwargs={
@@ -450,6 +404,7 @@ class Main(ShowBase):
                 server.cliKill = False
 
         def destroyProbe():
+            server.sendRespawn = False
             server.cliKill = True
 
         self.relaunchButton = DirectButton(

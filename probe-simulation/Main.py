@@ -143,6 +143,7 @@ class Main(ShowBase):
         self.lastDroneCount = 0
         self.taskMgr.add(self.update, "update")
         self.taskMgr.add(self.sync, "syncServer+Client")
+        thread.Thread(target=cli.runClient).start()
 
     def postLoad(self):
         self.tex = {}
@@ -231,7 +232,8 @@ class Main(ShowBase):
                     frameColor=(0, 0, 0, 1),
                 )
                 self.death.show()
-                thread.Thread(target=cli.runClient, args=["!!#death"]).start()
+                cli.cliDead = True
+                print("killed")
                 self.check_resume()
         else:
             ai.update(AIworld=self.AIworld, aiChars=self.aiChars, ship=self.ship)
@@ -255,7 +257,6 @@ class Main(ShowBase):
 
             # update velocities
             if self.update_time > 4:
-                cli.runClient("!!#update")
                 self.update_time = 0
                 try:
                     self.velocity = physics.physicsMgr.getObjectVelocity(
@@ -409,9 +410,10 @@ class Main(ShowBase):
 
     def check_resume(self):
         def _loop():
-            while True:
-                cli.runClient("!!#update")
-                if cli.var1 or not cli.serverDeath:
+            dead = True
+            while dead:
+                if cli.cliRespawn:
+                    dead = False
                     self.resume()
                     break
                 t.sleep(1)

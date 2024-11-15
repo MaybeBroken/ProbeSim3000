@@ -13,46 +13,52 @@ try:
 except:
     _system(f"python3 -m pip install json")
 
-var1 = None
-var2 = None
+cliDead = False
+cliRespawn = False
 devMode = True
 serverDeath = False
 
-serverContents = []
 portNum = 8765
-
 hostname = socket.gethostname()
-
 serveIPAddr = socket.gethostbyname(hostname)
 serveIp = f"ws://{serveIPAddr}:8765"
 
 
-async def _send_recieve(data):
-    global var1, var2, serverDeath
+def packList():
+    return {
+        "cliKill": serverDeath,
+        "cliDead": cliDead,
+        "sendRespawn": cliRespawn,
+    }
+
+
+async def _send_recieve():
+    global serverDeath, cliDead, cliRespawn
     async with websockets.connect(serveIp) as websocket:
-        encoder = js.encoder.JSONEncoder()
-        if data == "!!#death":
-            await websocket.send("!!#death")
-            var1 = await websocket.recv()
-        if data == "!!#update":
-            await websocket.send("!!#update")
-            msg = js.decoder.JSONDecoder().decode(await websocket.recv())
-            if msg["cliKill"]:
-                serverDeath = True
-            else:
-                serverDeath = False
+        running = True
+        while running:
+            # try:
+                await websocket.send(js.encoder.JSONEncoder().encode(packList()))
+                msg = js.decoder.JSONDecoder().decode(await websocket.recv())
+                if msg["cliKill"]:
+                    serverDeath = True
+                else:
+                    serverDeath = False
+                if msg["sendRespawn"]:
+                    cliRespawn = True
+                else:
+                    cliRespawn = False
+            # except:
+            #     print("crashed")
 
 
-def runClient(data):
-    if data == "!!#update":
-        asyncio.run(_send_recieve(data))
-    else:
-        try:
-            asyncio.run(_send_recieve(data))
-        except:
-            for i in range(5):
-                try:
-                    asyncio.run(_send_recieve(data))
-                    break
-                except:
-                    ...
+def runClient():
+    try:
+        asyncio.run(_send_recieve())
+    except:
+        for i in range(5):
+            try:
+                asyncio.run(_send_recieve())
+                break
+            except:
+                ...
