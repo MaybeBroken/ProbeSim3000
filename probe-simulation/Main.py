@@ -221,6 +221,8 @@ class Main(ShowBase):
         ):
             if not self.doneDeath:
                 self.doneDeath = True
+                cli.serverDeath = False
+                cli.cliDead = True
                 self.ship.setPos(0, 0, 0)
                 physics.physicsMgr.removeObject(physics.physicsMgr, self.ship, "ship")
                 self.updateOverlay()
@@ -232,8 +234,6 @@ class Main(ShowBase):
                     frameColor=(0, 0, 0, 1),
                 )
                 self.death.show()
-                cli.cliDead = True
-                print("killed")
                 self.check_resume()
         else:
             ai.update(AIworld=self.AIworld, aiChars=self.aiChars, ship=self.ship)
@@ -414,9 +414,12 @@ class Main(ShowBase):
             while dead:
                 if cli.cliRespawn:
                     dead = False
+                    cli.serverDeath = False
+                    cli.cliDead = False
+                    cli.cliRespawn = False
                     self.resume()
                     break
-                t.sleep(1)
+                t.sleep(0.25)
 
         thread.Thread(target=_loop).start()
 
