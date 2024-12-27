@@ -117,12 +117,18 @@ class Main(ShowBase):
 
     def update(self, task):
         result = task.cont
-        if server.cliDead:
-            self.relaunchButton["image"] = spriteSheet["respawnReady"]
-        else:
-            self.relaunchButton["image"] = spriteSheet["respawnDefault"]
-        # do all systems updates
-
+        if server.cliConnected:
+            self.dronesReminingText.setText(f"Drones remaining: {server.droneCount}")
+            if server.cliDead:
+                self.relaunchButton["image"] = spriteSheet["respawnReady"]
+                self.destroyButton.hide()
+            else:
+                self.relaunchButton["image"] = spriteSheet["respawnDefault"]
+            # do all systems updates
+            if server.cliKill:
+                self.destroyButton.hide()
+            else:
+                self.destroyButton.show()
         return result
 
     def setupControls(self):
@@ -156,8 +162,6 @@ class Main(ShowBase):
         self.accept("space-up", self.updateKeyMap, ["up", False])
         self.accept("lshift", self.updateKeyMap, ["down", True])
         self.accept("lshift-up", self.updateKeyMap, ["down", False])
-        self.accept("wheel_up", self.wireframeOn)
-        self.accept("wheel_down", self.wireframeOff)
 
     def updateKeyMap(self, key, value):
         self.keyMap[key] = value
@@ -248,7 +252,6 @@ class Main(ShowBase):
                     "Before",
                     self.setupLoaderFromMenu,
                 ],
-                daemon=True,
             ).start,
         )
 
@@ -299,7 +302,6 @@ class Main(ShowBase):
                 self.startupLoaderFrame,
                 50,
             ],
-            daemon=True,
         ).start()
         self.readyContinue = 30
         self.continueCount = 0
@@ -427,6 +429,7 @@ class Main(ShowBase):
             frameColor=(1.0, 1.0, 1.0, 0.0),
             command=destroyProbe,
         )
+        self.destroyButton.hide()
         self.CreditsText = OnscreenText(
             "Programmed by David Sponseller",
             pos=(-0.8 * monitor[0].width / monitor[0].height, -0.95),
@@ -457,6 +460,42 @@ class Main(ShowBase):
             scale=(0.05 * (569 / 127), 1, 0.05),
             pos=(-0.86 * monitor[0].width / monitor[0].height, 0, 0.95),
         )
+        self.dronesReminingText = OnscreenText(
+            text=f"Drones remaining: {server.droneCount}",
+            pos=(0.8 * monitor[0].width / monitor[0].height, -0.95),
+            scale=0.06,
+            parent=self.guiFrame,
+            fg=(0.5, 7, 7, 0.75),
+        )
+        self.worldMapObject = self.loader.loadModel("src/models/plane/mesh.bam")
+        self.worldMapObject.setDepthTest(True)
+        self.worldMapObject.setScale(1)
+        self.worldMapObject.setPos(0, 0, 0)
+        self.worldMapObject.setDepthWrite(True)
+        self.worldMapObject.setBin("opaque", 0)
+        self.worldMapObject.reparentTo(self.render)
+        self.worldMapObject.setHpr(0, 0, 0)
+        self.CamPosNode = self.render.attachNewNode("CamPosNode")
+        self.camera.reparentTo(self.CamPosNode)
+        self.camera.setPos(0, -150, 0)
+        self.camera.lookAt(self.worldMapObject)
+        self.CamPosNode.setHpr(0, -22, 0)
+        self.accept("mouse3", self.startRotateCamera)
+        self.accept("mouse3-up", self.stopRotateCamera)
+        self.accept("mouse1", self.startRotateCamera)
+        self.accept("mouse1-up", self.stopRotateCamera)
+        self.accept(
+            "wheel_up",
+            self.moveCamPos,
+            extraArgs=[1],
+        )
+        self.accept(
+            "wheel_down",
+            self.moveCamPos,
+            extraArgs=[-1],
+        )
+        self.taskMgr.add(self.rotateCameraTask, "rotateCameraTask")
+        self.isRotatingCamera = False
 
         thread.Thread(
             target=self.fadeInGuiElement_ThreadedOnly,
@@ -466,6 +505,31 @@ class Main(ShowBase):
             },
         ).start()
         self.taskMgr.add(self.update, "update")
+
+    def moveCamPos(self, pos):
+        current_y = self.camera.getY()
+        new_y = current_y - pos * (1 - abs(current_y) / 20)
+        self.camera.setY(new_y)
+
+    def startRotateCamera(self):
+        self.isRotatingCamera = True
+        self.lastMouseX, self.lastMouseY = (
+            self.win.getPointer(0).getX(),
+            self.win.getPointer(0).getY(),
+        )
+
+    def stopRotateCamera(self):
+        self.isRotatingCamera = False
+
+    def rotateCameraTask(self, task):
+        if self.isRotatingCamera:
+            md = self.win.getPointer(0)
+            x, y = md.getX(), md.getY()
+            deltaX, deltaY = x - self.lastMouseX, y - self.lastMouseY
+            self.lastMouseX, self.lastMouseY = x, y
+            self.CamPosNode.setH(self.CamPosNode.getH() - deltaX * 0.1)
+            self.CamPosNode.setP(self.CamPosNode.getP() - deltaY * 0.1)
+        return task.cont
 
 
 Main().run()

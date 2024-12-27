@@ -9,6 +9,9 @@ cliKill = False
 sendRespawn = False
 hostname = socket.gethostname()
 IPAddr = socket.gethostbyname(hostname)
+cliConnected = False
+droneCount = " -- "
+nodePositions = []
 
 
 def packList():
@@ -20,23 +23,33 @@ def packList():
 
 
 async def _echo(websocket):
-    running = True
-    while running:
+    global cliConnected
+    cliConnected = True
+    while True:
         try:
-            global cliDead, sendRespawn, cliKill
+            global cliDead, sendRespawn, cliKill, droneCount, nodePositions
             msg = json.decoder.JSONDecoder().decode(await websocket.recv())
             if msg["cliDead"]:
                 cliDead = True
-                cliKill = False
             else:
                 cliDead = False
                 sendRespawn = False
-                cliKill = False
+
+            nodePositions = msg["nodePositions"]
+            droneCount = msg["droneCount"]
+
             await websocket.send(json.encoder.JSONEncoder().encode(packList()))
-            # if sendRespawn:
-            #     sendRespawn = False
-        except:
-            ...
+            if cliKill:
+                cliKill = False
+        except websockets.ConnectionClosedError:
+            cliConnected = False
+            break
+        except websockets.ConnectionClosedOK:
+            cliConnected = False
+            break
+        except websockets.ConnectionClosed:
+            cliConnected = False
+            break
 
 
 async def _buildServe(port):
@@ -52,7 +65,4 @@ async def _buildServe(port):
 
 def startServer(port):
     while True:
-        try:
-            asyncio.run(_buildServe(port))
-        except:
-            print("server err @ <Main.Thread.server -> 51>")
+        asyncio.run(_buildServe(port))

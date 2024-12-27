@@ -143,7 +143,7 @@ class Main(ShowBase):
         self.lastDroneCount = 0
         self.taskMgr.add(self.update, "update")
         self.taskMgr.add(self.sync, "syncServer+Client")
-        thread.Thread(target=cli.runClient).start()
+        thread.Thread(target=cli.runClient, args=[self]).start()
 
     def postLoad(self):
         self.tex = {}
@@ -209,10 +209,16 @@ class Main(ShowBase):
         }
         return task.cont
 
+    nodePositions = []
     doneDeath = False
 
     def update(self, task):
         result = task.cont
+        self.nodePositions = [
+            {"drones": [tuple(ai["mesh"].getPos()) for ai in self.aiChars]},
+            {"ship": tuple(self.ship.getPos())},
+            {"voyager": tuple(self.voyager.getPos())},
+        ]
         playerMoveSpeed = Wvars.speed / 100
         if (
             self.ship.getDistance(self.voyager) > 9000
@@ -457,7 +463,7 @@ class Main(ShowBase):
             "secondary": False,
         }
 
-        self.accept("escape", sys.exit)
+        # self.accept("escape", sys.exit)
         self.accept("mouse1", self.MouseClicked)
         self.accept("mouse1-up", self.doNothing)
         # self.accept("mouse3", self.toggleTargetingGui)
@@ -680,7 +686,7 @@ class Main(ShowBase):
             dNode.instanceTo(self.droneMasterNode)
             dNode.setPos(randint(-500, 500), randint(-400, 300), randint(-50, 50))
             dNode.setScale(3)
-            AIchar = AICharacter("seeker", dNode, 50, 5, 10)
+            AIchar = AICharacter(model_name="seeker", model_np=dNode, mass=100, movt_force=80, max_force=50)
             self.AIworld.addAiChar(AIchar)
 
             size = Wvars.droneHitRadius
