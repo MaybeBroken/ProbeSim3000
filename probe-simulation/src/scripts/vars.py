@@ -11,7 +11,7 @@ camP = 0
 camR = 0
 cursorLock = True
 movementEnabled = True
-winMode = "win"
+winMode = "full-win"
 resolution = [600, 800]
 dataKeys: dict = {
     "shipPos": {

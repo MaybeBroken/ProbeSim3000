@@ -84,7 +84,7 @@ def degToRad(degrees):
 class Main(ShowBase):
     def __init__(self):
         ShowBase.__init__(self)
-        self.accept("q", sys.exit)
+        self.accept("control-q", sys.exit)
         disp.monitor = monitor
         disp.settingsScreen.start(self)
         self.ipEntry = DirectEntry(
@@ -294,7 +294,6 @@ class Main(ShowBase):
             dt = globalClock.getDt()  # type: ignore
             self.camera.lookAt(self.ship)
             self.skybox.setPos(self.camNodePath.getPos())
-            self.skybox2.setPos(self.camNodePath.getPos())
 
             self.SceneLightNode_sm.lookAt(self.ship)
 
@@ -543,9 +542,8 @@ class Main(ShowBase):
 
     def loadModels(self):
         self.sun = self.loader.loadModel("src/models/sun/sun.egg")
-        self.skybox = self.loader.loadModel("src/models/skybox/stars.egg")
+        self.skybox = self.loader.loadModel("src/models/skybox/box.bam")
         self.ship = self.loader.loadModel("src/models/simple_ship/model.egg")
-        self.skybox2 = self.loader.loadModel("src/models/skybox/stars.egg")
         try:
             self.voyager = self.loader.loadModel("src/models/voyager/voyager.bam")
         except:
@@ -663,20 +661,13 @@ class Main(ShowBase):
         self.win.requestProperties(properties)
 
     def setupSkybox(self):
-        self.skybox.setScale(50)
+        self.skybox.setScale(5000)
         self.skybox.setBin("background", 1)
         self.skybox.setDepthWrite(0)
-        # self.skybox.setLightOff()
+        self.skybox.setLightOff()
         self.skybox.setAntialias(AntialiasAttrib.MNone)
+        self.skybox.setColor(0.5, 0.5, 0.5, 0.5)
         self.skybox.reparentTo(self.render)
-
-        self.skybox2.setScale(50)
-        self.skybox2.setP(180)
-        self.skybox2.setBin("background", 1)
-        self.skybox2.setDepthWrite(0)
-        # self.skybox2.setLightOff()
-        self.skybox2.setAntialias(AntialiasAttrib.MNone)
-        self.skybox2.reparentTo(self.render)
 
     def setupAiWorld(self):
         self.AIworld = AIWorld(self.render)
@@ -686,7 +677,13 @@ class Main(ShowBase):
             dNode.instanceTo(self.droneMasterNode)
             dNode.setPos(randint(-500, 500), randint(-400, 300), randint(-50, 50))
             dNode.setScale(3)
-            AIchar = AICharacter(model_name="seeker", model_np=dNode, mass=100, movt_force=80, max_force=50)
+            AIchar = AICharacter(
+                model_name="seeker",
+                model_np=dNode,
+                mass=100,
+                movt_force=80,
+                max_force=50,
+            )
             self.AIworld.addAiChar(AIchar)
 
             size = Wvars.droneHitRadius

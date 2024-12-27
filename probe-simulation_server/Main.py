@@ -117,8 +117,11 @@ class Main(ShowBase):
 
     def update(self, task):
         result = task.cont
+        self.dronesReminingText.setText(f"Drones remaining: {server.droneCount}")
         if server.cliConnected:
-            self.dronesReminingText.setText(f"Drones remaining: {server.droneCount}")
+            self.relaunchButton.show()
+            self.worldMapObject.show()
+            self.noClientConnectedText.hide()
             if server.cliDead:
                 self.relaunchButton["image"] = spriteSheet["respawnReady"]
                 self.destroyButton.hide()
@@ -129,6 +132,13 @@ class Main(ShowBase):
                 self.destroyButton.hide()
             else:
                 self.destroyButton.show()
+        else:
+            self.noClientConnectedText.show()
+            self.worldMapObject.hide()
+            self.relaunchButton.hide()
+            self.destroyButton.hide()
+            self.relaunchButton["image"] = spriteSheet["respawnDefault"]
+            server.droneCount = " -- "
         return result
 
     def setupControls(self):
@@ -467,6 +477,14 @@ class Main(ShowBase):
             parent=self.guiFrame,
             fg=(0.5, 7, 7, 0.75),
         )
+        self.noClientConnectedText = OnscreenText(
+            text="No client connected",
+            pos=(0 * monitor[0].width / monitor[0].height, 0.8),
+            scale=0.1,
+            parent=self.guiFrame,
+            fg=(0.5, 7, 7, 0.75),
+        )
+
         self.worldMapObject = self.loader.loadModel("src/models/plane/mesh.bam")
         self.worldMapObject.setDepthTest(True)
         self.worldMapObject.setScale(1)
@@ -497,6 +515,8 @@ class Main(ShowBase):
         self.taskMgr.add(self.rotateCameraTask, "rotateCameraTask")
         self.isRotatingCamera = False
 
+        self.noClientConnectedText.hide()
+        self.worldMapObject.hide()
         thread.Thread(
             target=self.fadeInGuiElement_ThreadedOnly,
             kwargs={

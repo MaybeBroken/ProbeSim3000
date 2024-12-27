@@ -19,16 +19,16 @@ class ShaderCall:
             filters = CommonFilters(mainApp.win, mainApp.cam)
             filters.setBloom(
                 blend=(0.3, 0.4, 0.3, 0.8),
-                mintrigger=0.1,
+                mintrigger=0.75,
                 maxtrigger=1,
                 desat=0.1,
-                intensity=1,
+                intensity=0.25,
                 size="medium",
             )
             # filters.setAmbientOcclusion()
             filters.setSrgbEncode()
             filters.setHighDynamicRange()
-            filters.setBlurSharpen(1.25)
+            filters.setBlurSharpen(0.75)
         ...
 
 
