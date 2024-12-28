@@ -11,7 +11,11 @@ hostname = socket.gethostname()
 IPAddr = socket.gethostbyname(hostname)
 cliConnected = False
 droneCount = " -- "
-nodePositions = []
+nodePositions = {
+    "drones": [tuple],
+    "ship": tuple,
+    "voyager": tuple,
+}
 
 
 def packList():

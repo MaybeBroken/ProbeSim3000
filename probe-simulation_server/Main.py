@@ -24,28 +24,8 @@ from panda3d.core import (
     loadPrcFile,
     ConfigVariableString,
     AudioSound,
-)
-from panda3d.core import (
-    WindowProperties,
-    NodePath,
-    TextNode,
-    CullFaceAttrib,
-    Spotlight,
-    PerspectiveLens,
-    SphereLight,
-    PointLight,
-    Point3,
-    OccluderNode,
-)
-from panda3d.core import (
-    CollisionTraverser,
-    CollisionNode,
-    CollisionBox,
-    CollisionSphere,
-    CollisionRay,
-    CollisionHandlerQueue,
     Vec3,
-    CollisionHandlerPusher,
+    LineSegs,
 )
 
 import direct.stdpy.threading as thread
@@ -116,29 +96,50 @@ class Main(ShowBase):
         # end of setup tasks
 
     def update(self, task):
-        result = task.cont
-        self.dronesReminingText.setText(f"Drones remaining: {server.droneCount}")
-        if server.cliConnected:
-            self.relaunchButton.show()
-            self.worldMapObject.show()
-            self.noClientConnectedText.hide()
-            if server.cliDead:
-                self.relaunchButton["image"] = spriteSheet["respawnReady"]
-                self.destroyButton.hide()
+        try:
+            result = task.cont
+            self.dronesReminingText.setText(f"Drones remaining: {server.droneCount}")
+            if server.cliConnected:
+                self.ship.setPos(
+                    server.nodePositions["ship"][0] / 100,
+                    server.nodePositions["ship"][1] / 100,
+                    server.nodePositions["ship"][2] / 100,
+                )
+                self.CamPosNode.setPos(self.ship.getPos())
+
+                self.shipSegNP.removeNode()
+
+                self.shipSeg.reset()
+                self.shipSeg.setColor(self.ship.getColor())
+                self.shipSeg.moveTo(self.ship.getPos())
+                self.shipSeg.setColor(1, 1, 1, 1)
+                self.shipSeg.drawTo(self.ship.getX(), self.ship.getY(), -10)
+
+                self.shipSegNode = self.shipSeg.create(False)
+                self.shipSegNP = self.renderNode.attachNewNode(self.shipSegNode)
+
+                self.relaunchButton.show()
+                self.renderNode.show()
+                self.noClientConnectedText.hide()
+                if server.cliDead:
+                    self.relaunchButton["image"] = spriteSheet["respawnReady"]
+                    self.destroyButton.hide()
+                else:
+                    self.relaunchButton["image"] = spriteSheet["respawnDefault"]
+                # do all systems updates
+                if server.cliKill:
+                    self.destroyButton.hide()
+                else:
+                    self.destroyButton.show()
             else:
+                self.noClientConnectedText.show()
+                self.renderNode.hide()
+                self.relaunchButton.hide()
+                self.destroyButton.hide()
                 self.relaunchButton["image"] = spriteSheet["respawnDefault"]
-            # do all systems updates
-            if server.cliKill:
-                self.destroyButton.hide()
-            else:
-                self.destroyButton.show()
-        else:
-            self.noClientConnectedText.show()
-            self.worldMapObject.hide()
-            self.relaunchButton.hide()
-            self.destroyButton.hide()
-            self.relaunchButton["image"] = spriteSheet["respawnDefault"]
-            server.droneCount = " -- "
+                server.droneCount = " -- "
+        except:
+            ...
         return result
 
     def setupControls(self):
@@ -217,6 +218,19 @@ class Main(ShowBase):
 
     def load(self):
         self.loadAllTextures()
+        self.voyager = self.loader.loadModel("src/models/voyager/voyager.bam")
+        self.worldMapObject = self.loader.loadModel("src/models/plane/mesh.bam")
+        self.cube = self.loader.loadModel("src/models/cube/cube.egg")
+        t.sleep(1)
+        thread.Thread(
+            target=self.fadeOutGuiElement_ThreadedOnly,
+            kwargs={
+                "element": self.guiFrame,
+                "timeToFade": 80,
+                "execBeforeOrAfter": "After",
+                "target": self.alertReady,
+            },
+        ).start()
 
     def startGui(self):
         self.guiFrame = DirectFrame(parent=self.aspect2d)
@@ -382,15 +396,7 @@ class Main(ShowBase):
     def setupMainframe(self, task):
         if self.readyContinue >= self.continueCount:
             thread.Thread(target=server.startServer, args=[8765]).start()
-            thread.Thread(
-                target=self.fadeOutGuiElement_ThreadedOnly,
-                kwargs={
-                    "element": self.guiFrame,
-                    "timeToFade": 80,
-                    "execBeforeOrAfter": "After",
-                    "target": self.alertReady,
-                },
-            ).start()
+            thread.Thread(target=self.load).start()
             self.readyLoad = False
             self.taskMgr.add(self.awaitStartTask)
         else:
@@ -485,18 +491,32 @@ class Main(ShowBase):
             fg=(0.5, 7, 7, 0.75),
         )
 
-        self.worldMapObject = self.loader.loadModel("src/models/plane/mesh.bam")
+        self.renderNode = self.render.attachNewNode("renderNode")
+
         self.worldMapObject.setDepthTest(True)
         self.worldMapObject.setScale(1)
-        self.worldMapObject.setPos(0, 0, 0)
         self.worldMapObject.setDepthWrite(True)
         self.worldMapObject.setBin("opaque", 0)
-        self.worldMapObject.reparentTo(self.render)
+        self.worldMapObject.reparentTo(self.renderNode)
+        self.worldMapObject.setPos(0, 0, -10)
         self.worldMapObject.setHpr(0, 0, 0)
+
+        self.shipSeg = LineSegs("shipSeg")
+        self.shipSeg.setThickness(2)
+        self.shipSegNode = self.shipSeg.create(False)
+        self.shipSegNP = self.render.attachNewNode(self.shipSegNode)
+
+        self.voyager.reparentTo(self.renderNode)
+        self.voyager.setScale(2.8)
+        self.voyager.setPos(-30, 15, 1)
+        self.ship = self.cube.instanceTo(self.renderNode)
+        self.ship.setScale(0.2)
+        self.ship.setColor(0.2, 0.3, 1, 1)
+        self.lastDroneAmount = 0
         self.CamPosNode = self.render.attachNewNode("CamPosNode")
         self.camera.reparentTo(self.CamPosNode)
         self.camera.setPos(0, -150, 0)
-        self.camera.lookAt(self.worldMapObject)
+        self.camera.lookAt(self.renderNode)
         self.CamPosNode.setHpr(0, -22, 0)
         self.accept("mouse3", self.startRotateCamera)
         self.accept("mouse3-up", self.stopRotateCamera)
@@ -516,7 +536,7 @@ class Main(ShowBase):
         self.isRotatingCamera = False
 
         self.noClientConnectedText.hide()
-        self.worldMapObject.hide()
+        self.renderNode.hide()
         thread.Thread(
             target=self.fadeInGuiElement_ThreadedOnly,
             kwargs={

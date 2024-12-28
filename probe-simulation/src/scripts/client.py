@@ -39,18 +39,23 @@ async def _send_recieve(mainClass):
     async with websockets.connect(serveIp) as websocket:
         running = True
         while running:
-            await websocket.send(
-                js.encoder.JSONEncoder().encode(packList(mainClass=mainClass))
-            )
-            msg = js.decoder.JSONDecoder().decode(await websocket.recv())
-            if msg["cliKill"]:
-                serverDeath = True
-            else:
-                serverDeath = False
-            if msg["sendRespawn"]:
-                cliRespawn = True
-            else:
-                cliRespawn = False
+            try:
+                await websocket.send(
+                    js.encoder.JSONEncoder().encode(packList(mainClass=mainClass))
+                )
+                msg = js.decoder.JSONDecoder().decode(await websocket.recv())
+                if msg["cliKill"]:
+                    serverDeath = True
+                else:
+                    serverDeath = False
+                if msg["sendRespawn"]:
+                    cliRespawn = True
+                else:
+                    cliRespawn = False
+            except websockets.exceptions.ConnectionClosedError:
+                break
+            except websockets.exceptions.ConnectionClosedOK:
+                break
 
 
 def runClient(mainClass):

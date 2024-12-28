@@ -1,4 +1,4 @@
-from math import pi, sin, cos, sqrt
+from math import pi, sin, cos, sqrt, tan
 from random import randint
 import time as t
 import sys
@@ -38,6 +38,11 @@ from panda3d.core import (
     CollisionHandlerPusher,
     MovieTexture,
     CardMaker,
+    BitMask32,
+    Shader,
+    Point2,
+    Point3,
+    ColorBlendAttrib,
 )
 
 from direct.gui.OnscreenImage import OnscreenImage
@@ -115,7 +120,7 @@ class Main(ShowBase):
         physics.physicsMgr.enable(
             self=physics.physicsMgr,
             minimum_motion_check=0.001,
-            drag=0.001,
+            drag=0.004,
             gravity=(0, 0, 0),
         )
 
@@ -212,13 +217,77 @@ class Main(ShowBase):
     nodePositions = []
     doneDeath = False
 
+    def world_to_screen(
+        self, world_point, camera_pos, camera_rot, fov, screen_width, screen_height
+    ):
+        # Translate the point to the camera's coordinate system
+        translated_point = world_point - camera_pos
+
+        # Rotate the point according to the camera's rotation
+        cos_yaw = cos(degToRad(camera_rot[0]))
+        sin_yaw = sin(degToRad(camera_rot[0]))
+        cos_pitch = cos(degToRad(camera_rot[1]))
+        sin_pitch = sin(degToRad(camera_rot[1]))
+        cos_roll = cos(degToRad(camera_rot[2]))
+        sin_roll = sin(degToRad(camera_rot[2]))
+
+        rotated_point = Point3(
+            translated_point[0] * (cos_yaw * cos_pitch)
+            + translated_point[1]
+            * (cos_yaw * sin_pitch * sin_roll - sin_yaw * cos_roll)
+            + translated_point[2]
+            * (cos_yaw * sin_pitch * cos_roll + sin_yaw * sin_roll),
+            translated_point[0] * (sin_yaw * cos_pitch)
+            + translated_point[1]
+            * (sin_yaw * sin_pitch * sin_roll + cos_yaw * cos_roll)
+            + translated_point[2]
+            * (sin_yaw * sin_pitch * cos_roll - cos_yaw * sin_roll),
+            translated_point[0] * (-sin_pitch)
+            + translated_point[1] * (cos_pitch * sin_roll)
+            + translated_point[2] * (cos_pitch * cos_roll),
+        )
+
+        # Perspective projection
+        aspect_ratio = screen_width / screen_height
+        fov_rad = degToRad(fov[0])
+        screen_x = (
+            rotated_point[0] / (rotated_point[2] * tan(fov_rad / 2))
+        ) * aspect_ratio
+        screen_y = rotated_point[1] / (rotated_point[2] * tan(fov_rad / 2))
+
+        # Convert to screen coordinates
+        screen_x = (screen_x + 1) / 2 * screen_width
+        screen_y = (1 - screen_y) / 2 * screen_height
+        print(f"\n{screen_x}\n{screen_y}\n")
+
+        return Point2(screen_x, screen_y)
+
     def update(self, task):
         result = task.cont
-        self.nodePositions = [
-            {"drones": [tuple(ai["mesh"].getPos()) for ai in self.aiChars]},
-            {"ship": tuple(self.ship.getPos())},
-            {"voyager": tuple(self.voyager.getPos())},
-        ]
+        md = self.win.getPointer(0)
+        mouseX = md.getX()
+        mouseY = md.getY()
+        dt = globalClock.getDt()  # type: ignore
+        ft = globalClock.getFrameTime()  # type: ignore
+        self.box.set_shader_input("iTime", ft)
+        # screenSpace_pos = Point2()
+        # self.camLens.project(self.voyager.getPos(self.camNodePath), screenSpace_pos)
+        # Alternative way to get 2D screen coordinates of the voyager model
+        screenSpace_pos = self.world_to_screen(
+            self.voyager.getPos(),
+            self.camera.getPos(),
+            self.camera.getHpr(),
+            self.camLens.getFov(),
+            monitor[0].width,
+            monitor[0].height,
+        )
+        self.box.set_shader_input("iMouse", screenSpace_pos)
+        self.nodePositions = {
+            "drones": [tuple(ai["mesh"].getPos()) for ai in self.aiChars],
+            "ship": tuple(self.ship.getPos()),
+            "voyager": tuple(self.voyager.getPos()),
+        }
+
         playerMoveSpeed = Wvars.speed / 100
         if (
             self.ship.getDistance(self.voyager) > 9000
@@ -291,7 +360,6 @@ class Main(ShowBase):
                 self.update_time += 1
 
             # do system updates
-            dt = globalClock.getDt()  # type: ignore
             self.camera.lookAt(self.ship)
             self.skybox.setPos(self.camNodePath.getPos())
 
@@ -348,9 +416,6 @@ class Main(ShowBase):
             Wvars.camZ = self.camNodePath.getZ()
 
             # move cursor to stay within screen bounds
-            md = self.win.getPointer(0)
-            mouseX = md.getX()
-            mouseY = md.getY()
             if Wvars.cursorLock == True:
 
                 def moveCam():
@@ -581,6 +646,27 @@ class Main(ShowBase):
             physics.physicsMgr, self.ship, [0, 0, 0], "ship"
         )
 
+        self.lensFlareShader = Shader.load(
+            Shader.SL_GLSL,
+            vertex="src/shaders/lensFlare_v.glsl",
+            fragment="src/shaders/lensFlare_f.glsl",
+        )
+
+        # Add a transparent card over the screen
+        cm = CardMaker("fullscreenCard")
+        cm.setFrameFullscreenQuad()
+        self.box = NodePath(cm.generate())
+        self.box.setShader(self.lensFlareShader)
+        self.box.setAttrib(ColorBlendAttrib.make(ColorBlendAttrib.MAdd))
+        self.box.set_shader_input(
+            "iResolution",
+            (
+                self.win.getXSize(),
+                self.win.getYSize(),
+            ),
+        )
+        self.box.reparentTo(self.render2d)
+
         self.camera.reparentTo(self.camNodePath)
         self.camera.setPos(0, -50, 40)
         self.camLens.setFov(Wvars.camFOV)
@@ -613,6 +699,31 @@ class Main(ShowBase):
         self.rayQueue = CollisionHandlerQueue()
         self.cTrav.addCollider(self.rayNodePath, self.rayQueue)
 
+        # Add a collider to the voyager
+        voyagerCollider = self.voyager.find("**/+GeomNode").node().getGeom(0)
+        bounds = voyagerCollider.getBounds()
+        min_point = bounds.getMin()
+        min_point = (
+            min_point[0] / 2,
+            min_point[1] / 1,
+            min_point[2] / 2.5,
+        )
+        max_point = bounds.getMax()
+        max_point = (
+            max_point[0] / 2,
+            max_point[1] / 1,
+            max_point[2] / 2.5,
+        )
+        voyagerCollisionNode = CollisionNode("voyagerCollider")
+        voyagerCollisionNode.addSolid(CollisionBox(min_point, max_point))
+        voyagerCollisionNode.set_from_collide_mask(0)
+        voyagerCollisionNodePath = self.voyager.attachNewNode(voyagerCollisionNode)
+        voyagerCollisionNodePath.setCollideMask(BitMask32.bit(4))
+
+        # Add a pusher to handle collisions
+        voyagerPusher = CollisionHandlerPusher()
+        voyagerPusher.addCollider(voyagerCollisionNodePath, self.voyager)
+        self.cTrav.addCollider(voyagerCollisionNodePath, voyagerPusher)
         targetNode = NodePath("targetingNode")
         targetNode.reparentTo(self.ship)
         targetNode.set_y(45)
