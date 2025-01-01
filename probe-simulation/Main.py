@@ -11,6 +11,8 @@ import src.scripts.client as cli
 import src.scripts.weapons as weapons
 import src.scripts.ai as ai
 import src.scripts.guiUtils as guiUtils
+import asyncio
+import codecs
 
 from screeninfo import get_monitors
 from direct.showbase.ShowBase import ShowBase
@@ -42,8 +44,11 @@ from panda3d.core import (
     Shader,
     Point2,
     Point3,
+    StringStream,
+    PNMImage,
     ColorBlendAttrib,
 )
+
 
 from direct.gui.OnscreenImage import OnscreenImage
 import direct.stdpy.threading as thread
@@ -88,6 +93,7 @@ def degToRad(degrees):
 
 class Main(ShowBase):
     def __init__(self):
+        # this should be only the absolute startup tasks, launching submodules. all other configs should go in postLoad
         ShowBase.__init__(self)
         self.accept("control-q", sys.exit)
         disp.monitor = monitor
@@ -146,9 +152,13 @@ class Main(ShowBase):
         self.update_time = 0
         self.currentDroneCount = Wvars.droneNum
         self.lastDroneCount = 0
-        self.taskMgr.add(self.update, "update")
-        self.taskMgr.add(self.sync, "syncServer+Client")
-        thread.Thread(target=cli.runClient, args=[self]).start()
+        self.taskMgr.add(self.update, "update_task")
+        thread.Thread(
+            target=cli.runClient, args=[self, "client"], name="ClientThread"
+        ).start()
+        thread.Thread(
+            target=cli.runClient, args=[self, "stream"], name="StreamThread"
+        ).start()
 
     def postLoad(self):
         self.tex = {}
@@ -177,11 +187,21 @@ class Main(ShowBase):
         ai.setupShipHealth(self.HpIndicator)
         self.render.prepareScene(self.win.getGsg())
         self.voyager.flattenLight()
+        self.taskMgr.add(self.update_shader_inputs, "update_shader_inputs_task")
 
     def configIp(self):
         cli.serveIPAddr = self.ipEntry.get()
-        cli.serveIp = f"ws://{cli.serveIPAddr}:8765"
-        print(f"config succesful: ip={cli.serveIPAddr}")
+        cli.serveIp = f"ws://{cli.serveIPAddr}"
+        try:
+            asyncio.run(cli.testServerConnection())
+            print("Connected to server")
+            self.notify_win("Connected to server")
+            self.startupMenuStartButton["command"] = self.load
+            self.startupMenuStartButton["extraArgs"] = []
+            self.startupMenuStartButton.setColor(1, 1, 1, 1)
+        except:
+            print("Failed to connect to server")
+            self.notify_win("Failed to connect to server")
 
     def startPlayer(self, media_file, name):
         self.tex[name] = MovieTexture("name")
@@ -204,63 +224,8 @@ class Main(ShowBase):
     def playTex(self, name):
         self.tex[name].play()
 
-    def sync(self, task):
-        Wvars.dataKeys = {
-            "shipPos": {
-                "x": self.ship.getX(),
-                "y": self.ship.getY(),
-                "z": self.ship.getZ(),
-            }
-        }
-        return task.cont
-
     nodePositions = []
     doneDeath = False
-
-    def world_to_screen(
-        self, world_point, camera_pos, camera_rot, fov, screen_width, screen_height
-    ):
-        # Translate the point to the camera's coordinate system
-        translated_point = world_point - camera_pos
-
-        # Rotate the point according to the camera's rotation
-        cos_yaw = cos(degToRad(camera_rot[0]))
-        sin_yaw = sin(degToRad(camera_rot[0]))
-        cos_pitch = cos(degToRad(camera_rot[1]))
-        sin_pitch = sin(degToRad(camera_rot[1]))
-        cos_roll = cos(degToRad(camera_rot[2]))
-        sin_roll = sin(degToRad(camera_rot[2]))
-
-        rotated_point = Point3(
-            translated_point[0] * (cos_yaw * cos_pitch)
-            + translated_point[1]
-            * (cos_yaw * sin_pitch * sin_roll - sin_yaw * cos_roll)
-            + translated_point[2]
-            * (cos_yaw * sin_pitch * cos_roll + sin_yaw * sin_roll),
-            translated_point[0] * (sin_yaw * cos_pitch)
-            + translated_point[1]
-            * (sin_yaw * sin_pitch * sin_roll + cos_yaw * cos_roll)
-            + translated_point[2]
-            * (sin_yaw * sin_pitch * cos_roll - cos_yaw * sin_roll),
-            translated_point[0] * (-sin_pitch)
-            + translated_point[1] * (cos_pitch * sin_roll)
-            + translated_point[2] * (cos_pitch * cos_roll),
-        )
-
-        # Perspective projection
-        aspect_ratio = screen_width / screen_height
-        fov_rad = degToRad(fov[0])
-        screen_x = (
-            rotated_point[0] / (rotated_point[2] * tan(fov_rad / 2))
-        ) * aspect_ratio
-        screen_y = rotated_point[1] / (rotated_point[2] * tan(fov_rad / 2))
-
-        # Convert to screen coordinates
-        screen_x = (screen_x + 1) / 2 * screen_width
-        screen_y = (1 - screen_y) / 2 * screen_height
-        print(f"\n{screen_x}\n{screen_y}\n")
-
-        return Point2(screen_x, screen_y)
 
     def update(self, task):
         result = task.cont
@@ -268,20 +233,6 @@ class Main(ShowBase):
         mouseX = md.getX()
         mouseY = md.getY()
         dt = globalClock.getDt()  # type: ignore
-        ft = globalClock.getFrameTime()  # type: ignore
-        self.box.set_shader_input("iTime", ft)
-        # screenSpace_pos = Point2()
-        # self.camLens.project(self.voyager.getPos(self.camNodePath), screenSpace_pos)
-        # Alternative way to get 2D screen coordinates of the voyager model
-        screenSpace_pos = self.world_to_screen(
-            self.voyager.getPos(),
-            self.camera.getPos(),
-            self.camera.getHpr(),
-            self.camLens.getFov(),
-            monitor[0].width,
-            monitor[0].height,
-        )
-        self.box.set_shader_input("iMouse", screenSpace_pos)
         self.nodePositions = {
             "drones": [tuple(ai["mesh"].getPos()) for ai in self.aiChars],
             "ship": tuple(self.ship.getPos()),
@@ -302,6 +253,7 @@ class Main(ShowBase):
                 physics.physicsMgr.removeObject(physics.physicsMgr, self.ship, "ship")
                 self.updateOverlay()
                 self.silenceInput()
+                self.fullStop()
                 ai.pauseAll(self.aiChars)
                 self.pauseFrame = DirectFrame(
                     parent=self.render2d,
@@ -603,6 +555,8 @@ class Main(ShowBase):
         self.x_movement = 0
         self.y_movement = 0
         self.z_movement = 0
+        for pos in ["left", "right", "up", "down", "forward", "backward"]:
+            self.updateKeyMap(pos, False)
         physics.physicsMgr.clearVectorForce(physics.physicsMgr, self.ship, "ship")
 
     def loadModels(self):
@@ -648,24 +602,25 @@ class Main(ShowBase):
 
         self.lensFlareShader = Shader.load(
             Shader.SL_GLSL,
-            vertex="src/shaders/lensFlare_v.glsl",
-            fragment="src/shaders/lensFlare_f.glsl",
+            vertex="src/shaders/flat_v.glsl",
+            fragment="src/shaders/post1_hsv_f.glsl",
         )
 
         # Add a transparent card over the screen
         cm = CardMaker("fullscreenCard")
         cm.setFrameFullscreenQuad()
-        self.box = NodePath(cm.generate())
-        self.box.setShader(self.lensFlareShader)
-        self.box.setAttrib(ColorBlendAttrib.make(ColorBlendAttrib.MAdd))
-        self.box.set_shader_input(
+        self.shaderCard = NodePath(cm.generate())
+        self.shaderCard.setShader(self.lensFlareShader)
+        self.shaderCard.setAttrib(ColorBlendAttrib.make(ColorBlendAttrib.MAdd))
+        self.shaderCard.set_shader_input(
             "iResolution",
             (
                 self.win.getXSize(),
                 self.win.getYSize(),
             ),
         )
-        self.box.reparentTo(self.render2d)
+        self.shaderCard.reparentTo(self.render2d)
+        self.shaderCard.setColor(0, 0, 0, 1)
 
         self.camera.reparentTo(self.camNodePath)
         self.camera.setPos(0, -50, 40)
@@ -912,6 +867,38 @@ class Main(ShowBase):
                 weapons.lasers.fire(
                     origin=self.ship, target=hitObject, normal=normal, destroy=destroy
                 )
+
+    def update_shader_inputs(self, task):
+        self.shaderCard.set_shader_input(
+            "iResolution", (self.win.getXSize(), self.win.getYSize())
+        )
+        self.shaderCard.set_shader_input("iTime", globalClock.getFrameTime())  # type: ignore
+        return task.cont
+
+    def notify_win(self, message):
+        notifyFrame = DirectFrame(
+            parent=self.aspect2d,
+            frameSize=(-0.3, 0.3, -0.15, 0.15),
+            frameColor=(0, 0, 0, 0.6),
+            pos=(-1.2, 5, -0.5),
+        )
+        notifyLabel = DirectLabel(
+            parent=notifyFrame,
+            text=message,
+            scale=0.05,
+            pos=(0, 0, 0),
+            text_fg=(1, 1, 1, 1),
+            text_wordwrap=10,
+            frameColor=(0, 0, 0, 0),
+        )
+        destroyButton = DirectButton(
+            parent=notifyFrame,
+            text="X",
+            scale=0.05,
+            pos=(-0.275, 0, 0),
+            command=notifyFrame.destroy,
+        )
+        return notifyFrame
 
 
 Main().run()

@@ -5,16 +5,11 @@ import sys
 import os
 from yaml import load, dump
 from yaml import CLoader as fLoader, CDumper as fDumper
-
-import src.scripts.server as server
-import src.scripts.vars as Wvars
-import src.scripts.display as disp
-import src.scripts.fileManager as fMgr
-import src.scripts.physics as physics
+import cv2
+import numpy as np
+import codecs
 from screeninfo import get_monitors
-
 from direct.showbase.ShowBase import ShowBase
-
 from panda3d.core import *
 from panda3d.core import (
     TransparencyAttrib,
@@ -24,7 +19,9 @@ from panda3d.core import (
     loadPrcFile,
     ConfigVariableString,
     AudioSound,
+    PNMImage,
     Vec3,
+    StringStream,
     LineSegs,
 )
 
@@ -33,8 +30,11 @@ import direct.stdpy.file as panda_fMgr
 from direct.gui.DirectGui import *
 import direct.particles.Particles as part
 
-
-# just a bit of setup going on, nothing much to see;)
+import src.scripts.server as server
+import src.scripts.vars as Wvars
+import src.scripts.display as disp
+import src.scripts.fileManager as fMgr
+import src.scripts.physics as physics
 
 
 monitor = get_monitors()
@@ -94,6 +94,18 @@ class Main(ShowBase):
 
         self.startGui()
         # end of setup tasks
+
+    def stream(self):
+        while True:
+            try:
+                if server.cliConnected and server.cliDispBuffer is not None:
+                    frame = np.array(server.cliDispBuffer, dtype=np.uint8).reshape(
+                        (1920, 1080, 3)
+                    )
+                    if frame is not None:
+                        cv2.imshow("screen", frame)
+            except:
+                ...
 
     def update(self, task):
         try:
@@ -395,7 +407,10 @@ class Main(ShowBase):
 
     def setupMainframe(self, task):
         if self.readyContinue >= self.continueCount:
-            thread.Thread(target=server.startServer, args=[8765]).start()
+            thread.Thread(target=server.startServer, args=[8765, "dataServer"]).start()
+            thread.Thread(
+                target=server.startServer, args=[8766, "streamServer"]
+            ).start()
             thread.Thread(target=self.load).start()
             self.readyLoad = False
             self.taskMgr.add(self.awaitStartTask)
@@ -544,7 +559,9 @@ class Main(ShowBase):
                 "timeToFade": 80,
             },
         ).start()
+        self.madeCliPicture = False
         self.taskMgr.add(self.update, "update")
+        thread.Thread(target=self.stream).start()
 
     def moveCamPos(self, pos):
         current_y = self.camera.getY()

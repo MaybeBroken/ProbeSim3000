@@ -130,8 +130,10 @@ class settingsScreen:
             image=spriteSheet["startButton"],
             geom=None,
             frameColor=(1.0, 1.0, 1.0, 0.0),
-            command=self.load,
+            command=self.notify_win,
+            extraArgs=["attempted to start without connection"],
         )
+        self.startupMenuStartButton.setColor(0, 0, 0, 0.5)
 
         self.startupMenuQuitButton = DirectButton(
             parent=self.startupMenuFrame,
