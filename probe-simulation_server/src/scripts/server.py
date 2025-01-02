@@ -61,18 +61,6 @@ async def _echo(websocket, serverType):
             except websockets.ConnectionClosed:
                 cliConnected = False
                 break
-    elif serverType == "streamServer":
-        print("streamServer started")
-        running = True
-        while running:
-            try:
-                cliDispBuffer = await websocket.recv()
-                if cliDispBuffer == "None":
-                    running = False
-            except websockets.ConnectionClosedError:
-                ...
-            except websockets.ConnectionClosedOK:
-                ...
 
 
 async def _buildServe(port, serverType: str):

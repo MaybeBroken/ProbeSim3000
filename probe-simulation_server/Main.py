@@ -22,6 +22,9 @@ from panda3d.core import (
     PNMImage,
     Vec3,
     StringStream,
+    MovieTexture,
+    CardMaker,
+    NodePath,
     LineSegs,
 )
 
@@ -29,7 +32,6 @@ import direct.stdpy.threading as thread
 import direct.stdpy.file as panda_fMgr
 from direct.gui.DirectGui import *
 import direct.particles.Particles as part
-
 import src.scripts.server as server
 import src.scripts.vars as Wvars
 import src.scripts.display as disp
@@ -94,18 +96,6 @@ class Main(ShowBase):
 
         self.startGui()
         # end of setup tasks
-
-    def stream(self):
-        while True:
-            try:
-                if server.cliConnected and server.cliDispBuffer is not None:
-                    frame = np.array(server.cliDispBuffer, dtype=np.uint8).reshape(
-                        (1920, 1080, 3)
-                    )
-                    if frame is not None:
-                        cv2.imshow("screen", frame)
-            except:
-                ...
 
     def update(self, task):
         try:
@@ -200,7 +190,6 @@ class Main(ShowBase):
         spriteSheet["startButton"] = self.loader.loadTexture(
             "src/textures/raw/startButton.png"
         )
-        spriteSheet["startButton"]
         spriteSheet["exitButton"] = self.loader.loadTexture(
             "src/textures/raw/exitButton.png"
         )
@@ -248,15 +237,46 @@ class Main(ShowBase):
         self.guiFrame = DirectFrame(parent=self.aspect2d)
         self.setupIntroMenu()
 
+    tex = {}
+
+    def startPlayer(self, media_file, name):
+        self.tex[name] = MovieTexture(name)
+        self.tex[name].setLoop(True)
+        success = self.tex[name].read(media_file)
+        try:
+            assert success, "Failed to load video!"
+        except AssertionError as e:
+            print(e)
+            return None
+        self.tex[name].play()  # Start playing immediately after loading
+        cm = CardMaker("fullscreenCard")
+        cm.setFrameFullscreenQuad()
+        cm.setUvRange(self.tex[name])
+        card = NodePath(cm.generate())
+        card.reparentTo(self.render2d)
+        card.setTexture(self.tex[name])
+        return card
+
+    def stopTex(self, name):
+        self.tex[name].stop()
+
+    def playTex(self, name):
+        self.tex[name].play()
+
+    def spinImageTask(self, task):
+        self.startupMenuBackgroundImage2.setH(
+            self.startupMenuBackgroundImage2.getH() + 1
+        )
+        return task.cont
+
     def setupIntroMenu(self):
         self.startupMenuFrame = DirectFrame(parent=self.guiFrame)
         self.startupMenuFrame.set_transparency(1)
 
-        self.startupMenuBackgroundImage = OnscreenImage(
-            parent=self.startupMenuFrame,
-            image=spriteSheet["menuBackground"],
-            scale=(1 * monitor[0].width / monitor[0].height, 1, 1),
+        self.startupMenuBackgroundImage1 = self.startPlayer(
+            "src/movies/GUI/menu.mp4", "menuBackground"
         )
+        self.startupMenuBackgroundImage1.setBin("background", 0)
 
         self.startupMenuBackgroundImage2 = OnscreenImage(
             parent=self.startupMenuFrame,
@@ -264,6 +284,7 @@ class Main(ShowBase):
             scale=0.25,
             pos=(0.825 * monitor[0].width / monitor[0].height, 0, -0.725),
         )
+        self.spinTask = self.taskMgr.add(self.spinImageTask, "spinImageTask")
 
         self.startupMenuBackgroundImage3 = OnscreenImage(
             parent=self.startupMenuFrame,
@@ -303,7 +324,7 @@ class Main(ShowBase):
         )
 
         self.startupMenuCreditsText = OnscreenText(
-            "Programmed by David Sponseller",
+            "Programmed by David Sponseller\nVersion 1.2",
             pos=(-0.8 * monitor[0].width / monitor[0].height, -0.95),
             scale=0.04,
             parent=self.startupMenuFrame,
@@ -311,6 +332,7 @@ class Main(ShowBase):
         )
 
     def setupLoaderFromMenu(self):
+        # self.stopTex("menuBackground")
         self.startupLoaderFrame = DirectFrame(
             parent=self.guiFrame,
         )
@@ -408,9 +430,6 @@ class Main(ShowBase):
     def setupMainframe(self, task):
         if self.readyContinue >= self.continueCount:
             thread.Thread(target=server.startServer, args=[8765, "dataServer"]).start()
-            thread.Thread(
-                target=server.startServer, args=[8766, "streamServer"]
-            ).start()
             thread.Thread(target=self.load).start()
             self.readyLoad = False
             self.taskMgr.add(self.awaitStartTask)
@@ -462,7 +481,7 @@ class Main(ShowBase):
         )
         self.destroyButton.hide()
         self.CreditsText = OnscreenText(
-            "Programmed by David Sponseller",
+            "Programmed by David Sponseller\nVersion 1.2",
             pos=(-0.8 * monitor[0].width / monitor[0].height, -0.95),
             scale=0.04,
             parent=self.guiFrame,
@@ -561,7 +580,6 @@ class Main(ShowBase):
         ).start()
         self.madeCliPicture = False
         self.taskMgr.add(self.update, "update")
-        thread.Thread(target=self.stream).start()
 
     def moveCamPos(self, pos):
         current_y = self.camera.getY()

@@ -156,9 +156,6 @@ class Main(ShowBase):
         thread.Thread(
             target=cli.runClient, args=[self, "client"], name="ClientThread"
         ).start()
-        thread.Thread(
-            target=cli.runClient, args=[self, "stream"], name="StreamThread"
-        ).start()
 
     def postLoad(self):
         self.tex = {}

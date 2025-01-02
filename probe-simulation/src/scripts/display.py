@@ -147,7 +147,7 @@ class settingsScreen:
         )
 
         self.startupMenuCreditsText = OnscreenText(
-            text="Programmed by David Sponseller",
+            text="Programmed by David Sponseller\nVersion 1.2",
             pos=(-0.7 * monitor[0].width / monitor[0].height, -0.9),
             scale=0.02,
             parent=self.startupMenuFrame,
