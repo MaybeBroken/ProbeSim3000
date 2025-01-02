@@ -122,6 +122,7 @@ class Main(ShowBase):
 
                 self.relaunchButton.show()
                 self.renderNode.show()
+                self.startupMenuBackgroundImage1.hide()
                 self.noClientConnectedText.hide()
                 if server.cliDead:
                     self.relaunchButton["image"] = spriteSheet["respawnReady"]
@@ -134,7 +135,8 @@ class Main(ShowBase):
                 else:
                     self.destroyButton.show()
             else:
-                self.noClientConnectedText.show()
+                self.renderNode.hide()
+                self.startupMenuBackgroundImage1.show()
                 self.renderNode.hide()
                 self.relaunchButton.hide()
                 self.destroyButton.hide()
@@ -253,7 +255,10 @@ class Main(ShowBase):
         cm.setFrameFullscreenQuad()
         cm.setUvRange(self.tex[name])
         card = NodePath(cm.generate())
-        card.reparentTo(self.render2d)
+        card.reparentTo(self.render)
+        card.setPos(2, 0, 0)
+        card.setTransparency(TransparencyAttrib.MAlpha)
+        card.setBin("background", 0)
         card.setTexture(self.tex[name])
         return card
 
@@ -270,13 +275,13 @@ class Main(ShowBase):
         return task.cont
 
     def setupIntroMenu(self):
+        self.setBackgroundColor(r=0, g=0, b=0, a=1)
         self.startupMenuFrame = DirectFrame(parent=self.guiFrame)
         self.startupMenuFrame.set_transparency(1)
 
         self.startupMenuBackgroundImage1 = self.startPlayer(
             "src/movies/GUI/menu.mp4", "menuBackground"
         )
-        self.startupMenuBackgroundImage1.setBin("background", 0)
 
         self.startupMenuBackgroundImage2 = OnscreenImage(
             parent=self.startupMenuFrame,
@@ -337,8 +342,6 @@ class Main(ShowBase):
             parent=self.guiFrame,
         )
         self.startupLoaderFrame.set_transparency(1)
-
-        self.setBackgroundColor(r=0, g=0, b=0, a=1)
 
         self.startupLoaderVoyagerLogo = OnscreenImage(
             parent=self.startupLoaderFrame,
