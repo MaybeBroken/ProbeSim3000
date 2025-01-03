@@ -127,9 +127,9 @@ class Main(ShowBase):
         )
         physics.physicsMgr.enable(
             self=physics.physicsMgr,
-            minimum_motion_check=0.001,
-            drag=0.004,
+            drag=0.001,
             gravity=(0, 0, 0),
+            rotational_drag=0.15,
         )
 
         self.loadModels()
@@ -154,7 +154,7 @@ class Main(ShowBase):
         self.update_time = 0
         self.currentDroneCount = Wvars.droneNum
         self.lastDroneCount = 0
-        self.taskMgr.add(self.update, "update_task")
+        thread.Thread(target=self.update, name="update_task").start()
         thread.Thread(
             target=cli.runClient, args=[self, "client"], name="ClientThread"
         ).start()
@@ -226,224 +226,262 @@ class Main(ShowBase):
     nodePositions = []
     doneDeath = False
 
-    def update(self, task):
-        result = task.cont
-        md = self.win.getPointer(0)
-        mouseX = md.getX()
-        mouseY = md.getY()
-        dt = globalClock.getDt()  # type: ignore
-        self.nodePositions = {
-            "drones": [tuple(ai["mesh"].getPos()) for ai in self.aiChars],
-            "ship": tuple(self.ship.getPos()),
-            "voyager": tuple(self.voyager.getPos()),
-        }
-        if len(physics.physicsMgr.returnCollisions(physics.physicsMgr)) > 0:
-            collisions = physics.physicsMgr.returnCollisions(physics.physicsMgr)
-            for collision in collisions:
-                if collision.getIntoNode().getName() == "voyagerCollider":
-                    self.fullStop()
-            physics.physicsMgr.clearCollisions(physics.physicsMgr)
+    def update(self):
+        while True:
+            md = self.win.getPointer(0)
+            mouseX = md.getX()
+            mouseY = md.getY()
+            dt = 1 / 60
+            self.nodePositions = {
+                "drones": [tuple(ai["mesh"].getPos()) for ai in self.aiChars],
+                "ship": tuple(self.ship.getPos()),
+                "voyager": tuple(self.voyager.getPos()),
+            }
 
-        playerMoveSpeed = Wvars.speed / 100
-        if (
-            self.ship.getDistance(self.voyager) > 9000
-            or self.HpIndicator["value"] <= 0
-            or cli.serverDeath
-        ):
-            if not self.doneDeath:
-                self.doneDeath = True
-                cli.serverDeath = False
-                cli.cliDead = True
-                self.ship.setPos(0, 0, 0)
-                physics.physicsMgr.removeObject(physics.physicsMgr, self.ship, "ship")
-                self.updateOverlay()
-                self.silenceInput()
-                self.fullStop()
-                ai.pauseAll(self.aiChars)
-                self.pauseFrame = DirectFrame(
-                    parent=self.render2d,
-                    frameSize=(-1, 1, -1, 1),
-                    frameColor=(0, 0, 0, 1),
-                )
-                self.death.show()
-                self.check_resume()
-        else:
-            ai.update(AIworld=self.AIworld, aiChars=self.aiChars, ship=self.ship)
-            self.currentDroneCount = len(
-                list(_ai for _ai in self.aiChars if _ai["active"])
-            )
-            self.droneCount.setText(f"Drones Remaining: {self.currentDroneCount}")
-            if self.currentDroneCount != self.lastDroneCount:
-                for node in self.droneTargetIndicator.getChildren():
-                    node.destroy()
-                for char in self.aiChars:
-                    node = char["mesh"]
-                    img = OnscreenImage(
-                        image=self.loader.loadTexture("src/textures/raw/target.png"),
-                        pos=(0, -2, 0),
-                        scale=4,
-                        parent=node,
-                    )
-                    img.setTransparency(1)
-                    self.droneTargetList.append([node, img])
-
-            # update velocities
-            if self.update_time > 4:
-                self.update_time = 0
-                try:
-                    self.velocity = physics.physicsMgr.getObjectVelocity(
+            playerMoveSpeed = Wvars.speed / 100
+            if (
+                self.ship.getDistance(self.voyager) > 9000
+                or self.HpIndicator["value"] <= 0
+                or cli.serverDeath
+            ):
+                if not self.doneDeath:
+                    self.doneDeath = True
+                    cli.serverDeath = False
+                    cli.cliDead = True
+                    self.ship.setPos(0, 0, 0)
+                    physics.physicsMgr.removeObject(
                         physics.physicsMgr, self.ship, "ship"
                     )
-                    self.vel_text = (
-                        "Thrust: "
-                        + str(
-                            round(
-                                number=(
-                                    ((round(abs(self.velocity[0]) * 1000)) ^ 2)
-                                    + ((round(abs(self.velocity[1]) * 1000)) ^ 2)
-                                    + ((round(abs(self.velocity[2]) * 1000)) ^ 2) / 1000
-                                )
-                                - 4,
-                                ndigits=2,
-                            )
-                        )
-                        + " km/s"
+                    physics.physicsMgr.removeObject(
+                        physics.physicsMgr, self.camNodePath, "camNodePath"
                     )
-                    self.velocityMeter.configure(text=self.vel_text)
-                    self.posMeter.configure(text="pos XYZ: " + str(self.ship.getPos()))
-                except:
-                    ...
+                    self.updateOverlay()
+                    self.silenceInput()
+                    self.fullStop()
+                    ai.pauseAll(self.aiChars)
+                    self.pauseFrame = DirectFrame(
+                        parent=self.render2d,
+                        frameSize=(-1, 1, -1, 1),
+                        frameColor=(0, 0, 0, 1),
+                    )
+                    self.death.show()
+                    self.check_resume()
             else:
-                self.update_time += 1
-
-            # do system updates
-            self.camera.lookAt(self.ship)
-            self.skybox.setPos(self.camNodePath.getPos())
-
-            self.SceneLightNode_sm.lookAt(self.ship)
-
-            # calculate thrust
-            if Wvars.movementEnabled == True:
-                if self.keyMap["left"]:
-                    self.ship.setH(self.ship.getH() + Wvars.turnspeed / 100)
-                if self.keyMap["right"]:
-                    self.ship.setH(self.ship.getH() - Wvars.turnspeed / 100)
-                if self.keyMap["up"]:
-                    self.ship.setP(self.ship.getP() + Wvars.turnspeed / 100)
-                if self.keyMap["down"]:
-                    self.ship.setP(self.ship.getP() - Wvars.turnspeed / 100)
-                if self.keyMap["forward"]:
-                    self.x_movement -= (
-                        dt * playerMoveSpeed * sin(degToRad(self.ship.getH()))
-                    )
-                    self.y_movement += (
-                        dt * playerMoveSpeed * cos(degToRad(self.ship.getH()))
-                    )
-                    self.z_movement += (
-                        dt * playerMoveSpeed * cos(degToRad(self.ship.getP() - 90))
-                    )
-                if self.keyMap["backward"]:
-                    self.x_movement += (
-                        dt * playerMoveSpeed * sin(degToRad(self.ship.getH()))
-                    )
-                    self.y_movement -= (
-                        dt * playerMoveSpeed * cos(degToRad(self.ship.getH()))
-                    )
-                    self.z_movement -= (
-                        dt * playerMoveSpeed * cos(degToRad(self.ship.getP() - 90))
-                    )
-
-            physics.physicsMgr.addVectorForce(
-                physics.physicsMgr,
-                self.ship,
-                "ship",
-                [self.x_movement, self.y_movement, self.z_movement],
-            )
-            self.x_movement = 0
-            self.y_movement = 0
-            self.z_movement = 0
-            physics.physicsMgr.updateWorldPositions(physics.physicsMgr)
-            if len(physics.physicsMgr.returnCollisions(physics.physicsMgr)) > 0:
-                physics.physicsMgr.returnCollisions(physics.physicsMgr)
-                physics.physicsMgr.clearCollisions(physics.physicsMgr)
-
-            self.camNodePath.setPos(self.ship.getPos())
-            Wvars.camX = self.camNodePath.getX()
-            Wvars.camY = self.camNodePath.getY()
-            Wvars.camZ = self.camNodePath.getZ()
-
-            # move cursor to stay within screen bounds
-            if Wvars.cursorLock == True:
-
-                def moveCam():
-                    mouseChangeX = mouseX - self.lastMouseX
-                    mouseChangeY = mouseY - self.lastMouseY
-
-                    self.cameraSwingFactor = Wvars.swingSpeed / 10
-
-                    currentH = self.camNodePath.getH()
-                    currentP = self.camNodePath.getP()
-                    currentR = self.camNodePath.getR()
-
-                    Wvars.camH = currentH
-                    Wvars.camP = currentP
-                    Wvars.camR = currentR
-
-                    newP = currentP - mouseChangeY * dt * self.cameraSwingFactor
-
-                    # Restrict the camera pitch (P) to a range, e.g., -45 to 45 degrees
-                    minP = -45
-                    maxP = 45
-                    if newP < minP:
-                        newP = minP
-                    elif newP > maxP:
-                        newP = maxP
-
-                    self.camNodePath.setHpr(
-                        currentH - mouseChangeX * dt * self.cameraSwingFactor,
-                        newP,
-                        0,
-                    )
-
-                    disp.GUI.mapFrame.setR(self.camNodePath.getH())
-
-                    self.lastMouseX = mouseX
-                    self.lastMouseY = mouseY
-
-                if sys.platform == "darwin":
-                    moveCam()
-                elif int(monitor[0].width / 2) - mouseX >= int(monitor[0].width / 4):
-                    self.win.movePointer(0, x=int(monitor[0].width / 2), y=int(mouseY))
-                    self.lastMouseX = int(monitor[0].width / 2)
-                elif int(monitor[0].width / 2) - mouseX <= -int(monitor[0].width / 4):
-                    self.win.movePointer(0, x=int(monitor[0].width / 2), y=int(mouseY))
-                    self.lastMouseX = int(monitor[0].width / 2)
-                elif int(monitor[0].height / 2) - mouseY >= int(monitor[0].height / 4):
-                    self.win.movePointer(0, x=int(mouseX), y=int(monitor[0].height / 2))
-                    self.lastMouseY = int(monitor[0].height / 2)
-                elif int(monitor[0].height / 2) - mouseY <= -int(monitor[0].height / 4):
-                    self.win.movePointer(0, x=int(mouseX), y=int(monitor[0].height / 2))
-                    self.lastMouseY = int(monitor[0].height / 2)
-                else:
-                    # move camera based on mouse position
-                    moveCam()
-
-            if Wvars.aiming == True:
-                md = self.win.getPointer(0)
-                self.lastMouseX = md.getX()
-                self.lastMouseY = md.getY()
-
-                self.crosshair.setPos(
-                    (2 / monitor[0].width) * md.getX() - 1,
-                    0,
-                    -((2 / monitor[0].height) * md.getY() - 1),
+                ai.update(AIworld=self.AIworld, aiChars=self.aiChars, ship=self.ship)
+                self.currentDroneCount = len(
+                    list(_ai for _ai in self.aiChars if _ai["active"])
                 )
-                if self.progress["value"] < 100:
-                    self.progress["value"] += 1
+                self.droneCount.setText(f"Drones Remaining: {self.currentDroneCount}")
+                if self.currentDroneCount != self.lastDroneCount:
+                    for node in self.droneTargetIndicator.getChildren():
+                        node.destroy()
+                    for char in self.aiChars:
+                        node = char["mesh"]
+                        img = OnscreenImage(
+                            image=self.loader.loadTexture(
+                                "src/textures/raw/target.png"
+                            ),
+                            pos=(0, -2, 0),
+                            scale=4,
+                            parent=node,
+                        )
+                        img.setTransparency(1)
+                        self.droneTargetList.append([node, img])
 
-        if self.ship.getDistance(self.voyager) > 4000:
-            self.updateOverlay()
-        return result
+                # update velocities
+                if self.update_time > 4:
+                    self.update_time = 0
+                    try:
+                        self.velocity = physics.physicsMgr.getObjectVelocity(
+                            physics.physicsMgr, self.ship, "ship"
+                        )
+                        self.vel_text = (
+                            "Thrust: "
+                            + str(
+                                round(
+                                    number=(
+                                        ((round(abs(self.velocity[0]) * 1000)) ^ 2)
+                                        + ((round(abs(self.velocity[1]) * 1000)) ^ 2)
+                                        + ((round(abs(self.velocity[2]) * 1000)) ^ 2)
+                                        / 1000
+                                    )
+                                    - 4,
+                                    ndigits=2,
+                                )
+                            )
+                            + " km/s"
+                        )
+                        self.velocityMeter.configure(text=self.vel_text)
+                        self.posMeter.configure(
+                            text="pos XYZ: " + str(self.ship.getPos())
+                        )
+                    except:
+                        ...
+                else:
+                    self.update_time += 1
+
+                # do system updates
+                self.camera.lookAt(self.ship)
+                self.skybox.setPos(self.camNodePath.getPos())
+
+                self.SceneLightNode_sm.lookAt(self.ship)
+
+                # calculate thrust
+                if Wvars.movementEnabled == True:
+                    if self.keyMap["left"]:
+                        physics.physicsMgr.addRotationalForce(
+                            self=physics.physicsMgr,
+                            object=self.ship,
+                            name="ship",
+                            rotational_vector=[Wvars.turnspeed / 250, 0, 0],
+                        )
+                    if self.keyMap["right"]:
+                        physics.physicsMgr.addRotationalForce(
+                            self=physics.physicsMgr,
+                            object=self.ship,
+                            name="ship",
+                            rotational_vector=[-Wvars.turnspeed / 250, 0, 0],
+                        )
+                    if self.keyMap["up"]:
+                        physics.physicsMgr.addRotationalForce(
+                            self=physics.physicsMgr,
+                            object=self.ship,
+                            name="ship",
+                            rotational_vector=[0, Wvars.turnspeed / 250, 0],
+                        )
+                    if self.keyMap["down"]:
+                        physics.physicsMgr.addRotationalForce(
+                            self=physics.physicsMgr,
+                            object=self.ship,
+                            name="ship",
+                            rotational_vector=[0, -Wvars.turnspeed / 250, 0],
+                        )
+                    if self.keyMap["tiltRight"]:
+                        physics.physicsMgr.addRotationalForce(
+                            self=physics.physicsMgr,
+                            object=self.ship,
+                            name="ship",
+                            rotational_vector=[0, 0, Wvars.turnspeed / 250],
+                        )
+                    if self.keyMap["tiltLeft"]:
+                        physics.physicsMgr.addRotationalForce(
+                            self=physics.physicsMgr,
+                            object=self.ship,
+                            name="ship",
+                            rotational_vector=[0, 0, -Wvars.turnspeed / 250],
+                        )
+                    if self.keyMap["forward"]:
+                        self.x_movement -= (
+                            dt * playerMoveSpeed * sin(degToRad(self.ship.getH()))
+                        )
+                        self.y_movement += (
+                            dt * playerMoveSpeed * cos(degToRad(self.ship.getH()))
+                        )
+                        self.z_movement += (
+                            dt * playerMoveSpeed * cos(degToRad(self.ship.getP() - 90))
+                        )
+                    if self.keyMap["backward"]:
+                        self.x_movement += (
+                            dt * playerMoveSpeed * sin(degToRad(self.ship.getH()))
+                        )
+                        self.y_movement -= (
+                            dt * playerMoveSpeed * cos(degToRad(self.ship.getH()))
+                        )
+                        self.z_movement -= (
+                            dt * playerMoveSpeed * cos(degToRad(self.ship.getP() - 90))
+                        )
+
+                physics.physicsMgr.addVectorForce(
+                    physics.physicsMgr,
+                    self.ship,
+                    "ship",
+                    [self.x_movement, self.y_movement, self.z_movement],
+                )
+                self.x_movement = 0
+                self.y_movement = 0
+                self.z_movement = 0
+                physics.physicsMgr.updateWorldPositions(physics.physicsMgr)
+
+                self.camNodePath.setPos(self.ship.getPos())
+                Wvars.camX = self.camNodePath.getX()
+                Wvars.camY = self.camNodePath.getY()
+                Wvars.camZ = self.camNodePath.getZ()
+
+                # move cursor to stay within screen bounds
+                if Wvars.cursorLock == True:
+
+                    def moveCam():
+                        mouseChangeX = mouseX - self.lastMouseX
+                        mouseChangeY = mouseY - self.lastMouseY
+
+                        physics.physicsMgr.addRotationalForce(
+                            self=physics.physicsMgr,
+                            object=self.camNodePath,
+                            name="camNodePath",
+                            rotational_vector=[
+                                -mouseChangeX / 100,
+                                -mouseChangeY
+                                / 100
+                                * (monitor[0].width / monitor[0].height),
+                                0,
+                            ],
+                        )
+
+                        disp.GUI.mapFrame.setR(self.camera.getH())
+
+                        self.lastMouseX = mouseX
+                        self.lastMouseY = mouseY
+
+                    if sys.platform == "darwin":
+                        moveCam()
+                    elif int(monitor[0].width / 2) - mouseX >= int(
+                        monitor[0].width / 4
+                    ):
+                        self.win.movePointer(
+                            0, x=int(monitor[0].width / 2), y=int(mouseY)
+                        )
+                        self.lastMouseX = int(monitor[0].width / 2)
+                    elif int(monitor[0].width / 2) - mouseX <= -int(
+                        monitor[0].width / 4
+                    ):
+                        self.win.movePointer(
+                            0, x=int(monitor[0].width / 2), y=int(mouseY)
+                        )
+                        self.lastMouseX = int(monitor[0].width / 2)
+                    elif int(monitor[0].height / 2) - mouseY >= int(
+                        monitor[0].height / 4
+                    ):
+                        self.win.movePointer(
+                            0, x=int(mouseX), y=int(monitor[0].height / 2)
+                        )
+                        self.lastMouseY = int(monitor[0].height / 2)
+                    elif int(monitor[0].height / 2) - mouseY <= -int(
+                        monitor[0].height / 4
+                    ):
+                        self.win.movePointer(
+                            0, x=int(mouseX), y=int(monitor[0].height / 2)
+                        )
+                        self.lastMouseY = int(monitor[0].height / 2)
+                    else:
+                        # move camera based on mouse position
+                        moveCam()
+
+                if Wvars.aiming == True:
+                    md = self.win.getPointer(0)
+                    self.lastMouseX = md.getX()
+                    self.lastMouseY = md.getY()
+
+                    self.crosshair.setPos(
+                        (2 / monitor[0].width) * md.getX() - 1,
+                        0,
+                        -((2 / monitor[0].height) * md.getY() - 1),
+                    )
+                    if self.progress["value"] < 100:
+                        self.progress["value"] += 1
+
+            if self.ship.getDistance(self.voyager) > 4000:
+                self.updateOverlay()
+            t.sleep(1 / 60)
 
     def check_resume(self):
         def _loop():
@@ -467,7 +505,18 @@ class Main(ShowBase):
         self.HpIndicator["value"] = Wvars.shipHitPoints
         self.reviveInput()
         physics.physicsMgr.registerObject(
-            physics.physicsMgr, self.ship, [0, 0, 0], "ship"
+            self=physics.physicsMgr,
+            object=self.ship,
+            name="ship",
+            velocity=[0, 0, 0],
+            rotational_velocity=[0, 0, 0],
+        )
+        physics.physicsMgr.registerObject(
+            self=physics.physicsMgr,
+            object=self.camNodePath,
+            name="camNodePath",
+            velocity=[0, 0, 0],
+            rotational_velocity=[0, 0, 0],
         )
         ai.resumeAll(self.aiChars, self.ship)
         self.doneDeath = False
@@ -490,6 +539,8 @@ class Main(ShowBase):
             "right": False,
             "up": False,
             "down": False,
+            "tiltLeft": False,
+            "tiltRight": False,
             "primary": False,
             "secondary": False,
         }
@@ -512,6 +563,10 @@ class Main(ShowBase):
         self.accept("space-up", self.updateKeyMap, ["up", False])
         self.accept("lshift", self.updateKeyMap, ["down", True])
         self.accept("lshift-up", self.updateKeyMap, ["down", False])
+        self.accept("q", self.updateKeyMap, ["tiltLeft", True])
+        self.accept("q-up", self.updateKeyMap, ["tiltLeft", False])
+        self.accept("e", self.updateKeyMap, ["tiltRight", True])
+        self.accept("e-up", self.updateKeyMap, ["tiltRight", False])
         self.accept("wheel_up", self.devModeOn)
         self.accept("wheel_down", self.devModeOff)
         # self.accept("control-wheel_up", self.cameraZoom, ["in"])
@@ -572,7 +627,21 @@ class Main(ShowBase):
         self.z_movement = 0
         for pos in ["left", "right", "up", "down", "forward", "backward"]:
             self.updateKeyMap(pos, False)
-        physics.physicsMgr.clearVectorForce(physics.physicsMgr, self.ship, "ship")
+        physics.physicsMgr.clearVectorForce(
+            self=physics.physicsMgr,
+            object=self.ship,
+            name="ship",
+        )
+        physics.physicsMgr.clearRotationalForce(
+            self=physics.physicsMgr,
+            object=self.ship,
+            name="ship",
+        )
+        physics.physicsMgr.clearRotationalForce(
+            self=physics.physicsMgr,
+            object=self.camNodePath,
+            name="camNodePath",
+        )
 
     def loadModels(self):
         self.sun = self.loader.loadModel("src/models/sun/sun.egg")
@@ -612,7 +681,18 @@ class Main(ShowBase):
         self.ship.reparentTo(self.render)
 
         physics.physicsMgr.registerObject(
-            physics.physicsMgr, self.ship, [0, 0, 0], "ship"
+            self=physics.physicsMgr,
+            object=self.ship,
+            name="ship",
+            velocity=[0, 0, 0],
+            rotational_velocity=[0, 0, 0],
+        )
+        physics.physicsMgr.registerObject(
+            self=physics.physicsMgr,
+            object=self.camNodePath,
+            name="camNodePath",
+            velocity=[0, 0, 0],
+            rotational_velocity=[0, 0, 0],
         )
 
         self.lensFlareShader = Shader.load(
@@ -669,30 +749,6 @@ class Main(ShowBase):
         self.rayQueue = CollisionHandlerQueue()
         self.cTrav.addCollider(self.rayNodePath, self.rayQueue)
 
-        # Add a collider to the voyager
-        voyagerCollider = self.voyager.find("**/+GeomNode").node().getGeom(0)
-        bounds = voyagerCollider.getBounds()
-        min_point = bounds.getMin()
-        min_point = (
-            min_point[0] / 2,
-            min_point[1] / 1,
-            min_point[2] / 2.5,
-        )
-        max_point = bounds.getMax()
-        max_point = (
-            max_point[0] / 2,
-            max_point[1] / 1,
-            max_point[2] / 2.5,
-        )
-        voyagerCollisionNode = CollisionNode("voyagerCollider")
-        voyagerCollisionNode.addSolid(CollisionBox(min_point, max_point))
-        voyagerCollisionNodePath = self.voyager.attachNewNode(voyagerCollisionNode)
-        voyagerCollisionNodePath.setCollideMask(BitMask32.bit(4))
-
-        # Add a pusher to handle collisions
-        voyagerPusher = CollisionHandlerPusher()
-        voyagerPusher.addCollider(voyagerCollisionNodePath, self.voyager)
-        self.cTrav.addCollider(voyagerCollisionNodePath, voyagerPusher)
         targetNode = NodePath("targetingNode")
         targetNode.reparentTo(self.ship)
         targetNode.set_y(45)

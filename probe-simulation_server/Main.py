@@ -121,6 +121,7 @@ class Main(ShowBase):
                 self.shipSegNP = self.renderNode.attachNewNode(self.shipSegNode)
 
                 self.relaunchButton.show()
+                self.noClientConnectedText.hide()
                 self.renderNode.show()
                 self.noClientConnectedText.hide()
                 if server.cliDead:
@@ -138,6 +139,7 @@ class Main(ShowBase):
                 self.renderNode.hide()
                 self.relaunchButton.hide()
                 self.destroyButton.hide()
+                self.noClientConnectedText.show()
                 self.relaunchButton["image"] = spriteSheet["respawnDefault"]
                 server.droneCount = " -- "
         except:

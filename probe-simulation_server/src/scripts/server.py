@@ -30,7 +30,6 @@ def packList():
 
 async def _echo(websocket, serverType):
     global cliDead, sendRespawn, cliKill, droneCount, nodePositions, cliDispBuffer, cliConnected, cliDispBufferTotal
-    print(f"Server: {serverType} connected")
     if serverType == "dataServer":
         while True:
             try:
