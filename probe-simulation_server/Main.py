@@ -122,7 +122,6 @@ class Main(ShowBase):
 
                 self.relaunchButton.show()
                 self.renderNode.show()
-                self.startupMenuBackgroundImage1.hide()
                 self.noClientConnectedText.hide()
                 if server.cliDead:
                     self.relaunchButton["image"] = spriteSheet["respawnReady"]
@@ -136,7 +135,6 @@ class Main(ShowBase):
                     self.destroyButton.show()
             else:
                 self.renderNode.hide()
-                self.startupMenuBackgroundImage1.show()
                 self.renderNode.hide()
                 self.relaunchButton.hide()
                 self.destroyButton.hide()
@@ -255,10 +253,9 @@ class Main(ShowBase):
         cm.setFrameFullscreenQuad()
         cm.setUvRange(self.tex[name])
         card = NodePath(cm.generate())
-        card.reparentTo(self.render)
-        card.setPos(2, 0, 0)
+        card.reparentTo(self.render2d)
+        card.setPos(0, 0, 0)
         card.setTransparency(TransparencyAttrib.MAlpha)
-        card.setBin("background", 0)
         card.setTexture(self.tex[name])
         return card
 
@@ -282,6 +279,7 @@ class Main(ShowBase):
         self.startupMenuBackgroundImage1 = self.startPlayer(
             "src/movies/GUI/menu.mp4", "menuBackground"
         )
+        self.startupMenuBackgroundImage1.setBin("fixed", 1)
 
         self.startupMenuBackgroundImage2 = OnscreenImage(
             parent=self.startupMenuFrame,
@@ -462,6 +460,8 @@ class Main(ShowBase):
             server.sendRespawn = False
             server.cliKill = True
 
+        self.startupMenuBackgroundImage1.hide()
+
         self.relaunchButton = DirectButton(
             parent=self.guiFrame,
             pos=(-0.0 * monitor[0].width / monitor[0].height, 0, 0.8),
@@ -573,6 +573,7 @@ class Main(ShowBase):
         self.isRotatingCamera = False
 
         self.noClientConnectedText.hide()
+        self.renderNode.setBin("fixed", 2)
         self.renderNode.hide()
         thread.Thread(
             target=self.fadeInGuiElement_ThreadedOnly,

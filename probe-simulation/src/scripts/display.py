@@ -109,11 +109,10 @@ class settingsScreen:
         self.startupMenuFrame = DirectFrame(parent=self.guiFrame)
         self.startupMenuFrame.set_transparency(1)
 
-        self.startupMenuBackgroundImage = OnscreenImage(
-            parent=self.startupMenuFrame,
-            image=spriteSheet["menuBackground"],
-            scale=(1 * monitor[0].width / monitor[0].height, 1, 1),
+        self.startupMenuBackgroundImage = self.startPlayer(
+            "src/movies/GUI/menu.mp4", "menu"
         )
+        self.playTex("menu")
 
         self.startupMenuBackgroundImage2 = OnscreenImage(
             parent=self.startupMenuFrame,
@@ -127,6 +126,10 @@ class settingsScreen:
             pos=(-0.7 * monitor[0].width / monitor[0].height, 0, 0.6),
             scale=(0.12 * (553 / 194), 1, 0.12),
             relief=None,
+            text="connect to server first",
+            text_scale=(0.1 / (553 / 194) * 5, 0.5, 0.6),
+            text_pos=(0, -0.65),
+            text_fg=(1, 1, 1, 1),
             image=spriteSheet["startButton"],
             geom=None,
             frameColor=(1.0, 1.0, 1.0, 0.0),

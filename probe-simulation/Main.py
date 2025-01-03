@@ -97,6 +97,7 @@ class Main(ShowBase):
         ShowBase.__init__(self)
         self.accept("control-q", sys.exit)
         disp.monitor = monitor
+        self.tex = {}
         disp.settingsScreen.start(self)
         self.ipEntry = DirectEntry(
             parent=self.settingsFrame,
@@ -109,6 +110,7 @@ class Main(ShowBase):
 
     def load(self):
         self.guiFrame.hide()
+        self.startupMenuBackgroundImage.hide()
         self.backfaceCullingOn()
         self.disableMouse()
 
@@ -158,7 +160,6 @@ class Main(ShowBase):
         ).start()
 
     def postLoad(self):
-        self.tex = {}
         disp.GUI.miniMap(disp.GUI)
         Wvars.shipHitPoints = Wvars.shipHealth
 
@@ -196,6 +197,7 @@ class Main(ShowBase):
             self.startupMenuStartButton["command"] = self.load
             self.startupMenuStartButton["extraArgs"] = []
             self.startupMenuStartButton.setColor(1, 1, 1, 1)
+            self.startupMenuStartButton["text"] = ""
         except:
             print("Failed to connect to server")
             self.notify_win("Failed to connect to server")
@@ -235,6 +237,12 @@ class Main(ShowBase):
             "ship": tuple(self.ship.getPos()),
             "voyager": tuple(self.voyager.getPos()),
         }
+        if len(physics.physicsMgr.returnCollisions(physics.physicsMgr)) > 0:
+            collisions = physics.physicsMgr.returnCollisions(physics.physicsMgr)
+            for collision in collisions:
+                if collision.getIntoNode().getName() == "voyagerCollider":
+                    self.fullStop()
+            physics.physicsMgr.clearCollisions(physics.physicsMgr)
 
         playerMoveSpeed = Wvars.speed / 100
         if (
@@ -381,9 +389,19 @@ class Main(ShowBase):
                     Wvars.camP = currentP
                     Wvars.camR = currentR
 
+                    newP = currentP - mouseChangeY * dt * self.cameraSwingFactor
+
+                    # Restrict the camera pitch (P) to a range, e.g., -45 to 45 degrees
+                    minP = -45
+                    maxP = 45
+                    if newP < minP:
+                        newP = minP
+                    elif newP > maxP:
+                        newP = maxP
+
                     self.camNodePath.setHpr(
                         currentH - mouseChangeX * dt * self.cameraSwingFactor,
-                        currentP - mouseChangeY * dt * self.cameraSwingFactor,
+                        newP,
                         0,
                     )
 
@@ -668,7 +686,6 @@ class Main(ShowBase):
         )
         voyagerCollisionNode = CollisionNode("voyagerCollider")
         voyagerCollisionNode.addSolid(CollisionBox(min_point, max_point))
-        voyagerCollisionNode.set_from_collide_mask(0)
         voyagerCollisionNodePath = self.voyager.attachNewNode(voyagerCollisionNode)
         voyagerCollisionNodePath.setCollideMask(BitMask32.bit(4))
 
@@ -873,6 +890,25 @@ class Main(ShowBase):
         return task.cont
 
     def notify_win(self, message):
+        def destroyThread(obj, wait=2, time=0.6):
+            t.sleep(wait)
+            if not self.objDestroyed:
+                self.objDestroyed = True
+                obj.find("**/button").removeNode()
+                obj.colorScaleInterval(
+                    time,
+                    (
+                        obj.getColorScale()[0],
+                        obj.getColorScale()[1],
+                        obj.getColorScale()[2],
+                        0,
+                    ),
+                ).start()
+                t.sleep(time + 0.1)
+                obj.destroy()
+
+        self.objDestroyed = False
+
         notifyFrame = DirectFrame(
             parent=self.aspect2d,
             frameSize=(-0.3, 0.3, -0.15, 0.15),
@@ -893,8 +929,14 @@ class Main(ShowBase):
             text="X",
             scale=0.05,
             pos=(-0.275, 0, 0),
-            command=notifyFrame.destroy,
+            command=thread.Thread(
+                target=destroyThread, args=[notifyFrame, 0, 0.3]
+            ).start,
         )
+        destroyButton.setName("button")
+        notifyFrame.setTransparency(True)
+
+        thread.Thread(target=destroyThread, args=[notifyFrame, 2, 0.6]).start()
         return notifyFrame
 
 

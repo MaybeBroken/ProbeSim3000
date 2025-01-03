@@ -9,3 +9,4 @@ win-size 1920 1080
 frame-rate-meter-update-interval 0.4
 threading-model Cull/Draw
 want-directtools false
+notify-level fatal
