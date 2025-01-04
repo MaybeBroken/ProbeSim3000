@@ -18,10 +18,23 @@ class physicsMgr:
         self.updating = True
 
     def registerObject(
-        self, object, velocity: list, name: str, rotational_velocity: list = [0, 0, 0]
+        self,
+        object,
+        name: str,
+        velocity: list,
+        velocityLimit=None,
+        rotational_velocity: list = [0, 0, 0],
+        rotationLimit=None,
     ):
         self.registeredObjects.append(
-            [object, name, velocity, rotational_velocity]
+            [
+                object,
+                name,
+                velocity,
+                rotational_velocity,
+                velocityLimit,
+                rotationLimit,
+            ]
         )  # Add rotational velocity
 
     def registerColliderPlane(
@@ -50,32 +63,64 @@ class physicsMgr:
     def addVectorForce(self, object: None, name: str, vector: list):
         for node in self.registeredObjects:
             if node[0] == object or node[1] == name:
-                if len(vector) == len(node[2]):
-                    node[2][0] += vector[0]
-                    node[2][1] += vector[1]
-                    node[2][2] += vector[2]
+                if node[4] != None:
+                    if len(vector) == len(node[2]):
+                        if abs(node[2][0]) < abs(node[4][0]):
+                            node[2][0] += vector[0]
+                        if abs(node[2][1]) < abs(node[4][1]):
+                            node[2][1] += vector[1]
+                        if abs(node[2][2]) < abs(node[4][2]):
+                            node[2][2] += vector[2]
+                    else:
+                        exit(
+                            "Warning: incorrect vector addition for "
+                            + str(node[2])
+                            + " and "
+                            + str(vector)
+                        )
                 else:
-                    exit(
-                        "Warning: incorrect vector addition for "
-                        + str(node[2])
-                        + " and "
-                        + str(vector)
-                    )
+                    if len(vector) == len(node[2]):
+                        node[2][0] += vector[0]
+                        node[2][1] += vector[1]
+                        node[2][2] += vector[2]
+                    else:
+                        exit(
+                            "Warning: incorrect vector addition for "
+                            + str(node[2])
+                            + " and "
+                            + str(vector)
+                        )
 
     def addRotationalForce(self, object: None, name: str, rotational_vector: list):
         for node in self.registeredObjects:
             if node[0] == object or node[1] == name:
-                if len(rotational_vector) == len(node[3]):
-                    node[3][0] += rotational_vector[0]
-                    node[3][1] += rotational_vector[1]
-                    node[3][2] += rotational_vector[2]
+                if node[5] != None:
+                    if len(rotational_vector) == len(node[3]):
+                        if abs(node[3][0]) < abs(node[5][0]):
+                            node[3][0] += rotational_vector[0]
+                        if abs(node[3][1]) < abs(node[5][1]):
+                            node[3][1] += rotational_vector[1]
+                        if abs(node[3][2]) < abs(node[5][2]):
+                            node[3][2] += rotational_vector[2]
+                    else:
+                        exit(
+                            "Warning: incorrect rotational vector addition for "
+                            + str(node[3])
+                            + " and "
+                            + str(rotational_vector)
+                        )
                 else:
-                    exit(
-                        "Warning: incorrect rotational vector addition for "
-                        + str(node[3])
-                        + " and "
-                        + str(rotational_vector)
-                    )
+                    if len(rotational_vector) == len(node[3]):
+                        node[3][0] += rotational_vector[0]
+                        node[3][1] += rotational_vector[1]
+                        node[3][2] += rotational_vector[2]
+                    else:
+                        exit(
+                            "Warning: incorrect rotational vector addition for "
+                            + str(node[3])
+                            + " and "
+                            + str(rotational_vector)
+                        )
 
     def clearVectorForce(self, object: None, name: str):
         for node in self.registeredObjects:

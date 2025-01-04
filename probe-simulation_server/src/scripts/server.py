@@ -2,9 +2,16 @@ import asyncio
 import websockets
 import time as t
 import socket
-import json
-import functools
+from os import system
 
+try:
+    import json
+except ImportError:
+    system("python3 -m pip install json")
+try:
+    import functools
+except ImportError:
+    system("python3 -m pip install functools")
 cliDead = False
 cliKill = False
 sendRespawn = False

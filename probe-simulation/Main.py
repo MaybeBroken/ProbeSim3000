@@ -1,24 +1,36 @@
+import os
 from math import pi, sin, cos, sqrt, tan
 from random import randint
 import time as t
 import sys
-import websockets as ws
-import src.scripts.vars as Wvars
-import src.scripts.physics as physics
-import src.scripts.display as disp
-import src.scripts.fileManager as fMgr
-import src.scripts.client as cli
-import src.scripts.weapons as weapons
-import src.scripts.ai as ai
-import src.scripts.guiUtils as guiUtils
-import asyncio
-import codecs
 
-from screeninfo import get_monitors
-from direct.showbase.ShowBase import ShowBase
-
+try:
+    import websockets as ws
+except ImportError:
+    os.system("python3 -m pip install websockets")
+    import websockets as ws
+try:
+    import asyncio
+except ImportError:
+    os.system("python3 -m pip install asyncio")
+    import asyncio
+try:
+    from screeninfo import get_monitors
+except ImportError:
+    os.system("python3 -m pip install screeninfo")
+    from screeninfo import get_monitors
+try:
+    from direct.showbase.ShowBase import ShowBase
+except ImportError:
+    os.system("python3 -m pip install panda3d")
+    from direct.showbase.ShowBase import ShowBase
+try:
+    import simplepbr as pbr
+except ImportError:
+    os.system("python3 -m pip install panda3d-simplepbr")
+    import simplepbr as pbr
 from panda3d.ai import *
-from panda3d.ai import AIWorld, AICharacter, Flock
+from panda3d.ai import AIWorld, AICharacter
 from panda3d.core import *
 from panda3d.core import (
     TransparencyAttrib,
@@ -48,13 +60,26 @@ from panda3d.core import (
     PNMImage,
     ColorBlendAttrib,
 )
-
-
 from direct.gui.OnscreenImage import OnscreenImage
 import direct.stdpy.threading as thread
-import direct.stdpy.file as panda_fMgr
 from direct.gui.DirectGui import *
 from direct.motiontrail.MotionTrail import MotionTrail
+
+try:
+    import src.scripts.vars as Wvars
+    import src.scripts.physics as physics
+    import src.scripts.display as disp
+    import src.scripts.fileManager as fMgr
+    import src.scripts.client as cli
+    import src.scripts.weapons as weapons
+    import src.scripts.ai as ai
+    import src.scripts.guiUtils as guiUtils
+except ImportError as e:
+    print(e)
+    print(
+        "\nFailed to import required modules, your installation may be corrupt. \nContact the Developer for assistance at \033[92m@_maybebroken\033[0m on Discord or \033[96m@MaybeBroken\033[0m on Github\n"
+    )
+    exit(1)
 
 monitor = get_monitors()
 loadPrcFile("src/settings.prc")
@@ -124,6 +149,7 @@ class Main(ShowBase):
             render=self.render2d,
             _main=self,
             TransparencyAttrib=TransparencyAttrib,
+            _monitor=monitor,
         )
         physics.physicsMgr.enable(
             self=physics.physicsMgr,
@@ -496,11 +522,12 @@ class Main(ShowBase):
                     break
                 t.sleep(0.25)
 
-        thread.Thread(target=_loop).start()
+        thread.Thread(target=_loop, name="deathCheckLoop").start()
 
     def resume(self):
         self.pauseFrame.destroy()
         self.death.hide()
+        Wvars.shipHitPoints = Wvars.shipHealth
         self.HpIndicator["range"] = Wvars.shipHealth
         self.HpIndicator["value"] = Wvars.shipHitPoints
         self.reviveInput()
@@ -509,7 +536,7 @@ class Main(ShowBase):
             object=self.ship,
             name="ship",
             velocity=[0, 0, 0],
-            rotational_velocity=[0, 0, 0],
+            rotational_velocity=[0.1, 0, 0],
         )
         physics.physicsMgr.registerObject(
             self=physics.physicsMgr,
@@ -642,6 +669,7 @@ class Main(ShowBase):
             object=self.camNodePath,
             name="camNodePath",
         )
+        
 
     def loadModels(self):
         self.sun = self.loader.loadModel("src/models/sun/sun.egg")
@@ -686,6 +714,8 @@ class Main(ShowBase):
             name="ship",
             velocity=[0, 0, 0],
             rotational_velocity=[0, 0, 0],
+            rotationLimit=[3.5, 3.5, 4],
+            velocityLimit=[2, 2, 2],
         )
         physics.physicsMgr.registerObject(
             self=physics.physicsMgr,
@@ -693,6 +723,7 @@ class Main(ShowBase):
             name="camNodePath",
             velocity=[0, 0, 0],
             rotational_velocity=[0, 0, 0],
+            rotationLimit=[4, 4, 4],
         )
 
         self.lensFlareShader = Shader.load(
@@ -986,13 +1017,13 @@ class Main(ShowBase):
             scale=0.05,
             pos=(-0.275, 0, 0),
             command=thread.Thread(
-                target=destroyThread, args=[notifyFrame, 0, 0.3]
+                target=destroyThread, args=[notifyFrame, 0, 0.3], name="destroyThread"
             ).start,
         )
         destroyButton.setName("button")
         notifyFrame.setTransparency(True)
 
-        thread.Thread(target=destroyThread, args=[notifyFrame, 2, 0.6]).start()
+        thread.Thread(target=destroyThread, args=[notifyFrame, 2, 0.6], name="destroyThread").start()
         return notifyFrame
 
 

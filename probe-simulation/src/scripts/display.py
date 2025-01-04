@@ -4,6 +4,7 @@ from src.scripts.guiUtils import fade
 import src.scripts.vars as Wvars
 from direct.directtools.DirectGrid import DirectGrid
 from panda3d.core import deg2Rad, TextNode
+import simplepbr as pbr
 import sys
 
 monitor = None
@@ -25,7 +26,8 @@ class ShaderCall:
                 intensity=0.25,
                 size="medium",
             )
-            # filters.setAmbientOcclusion()
+            filters.setExposureAdjust(0.1)
+            filters.setCartoonInk()
             filters.setSrgbEncode()
             filters.setHighDynamicRange()
             filters.setBlurSharpen(0.75)
@@ -288,34 +290,17 @@ class settingsScreen:
 
 
 class GUI:
-    def start(self, render, _main, TransparencyAttrib):
+    def start(self, render, _main, TransparencyAttrib, _monitor):
         self.guiFrame = DirectFrame(parent=render)
         self.render = render
         self.main = _main
         self.TransparencyAttrib = TransparencyAttrib
-        global main, guiClass
+        global main, guiClass, monitor
+        monitor = _monitor
         main = _main
         guiClass = self
 
     def setup(self):
-        borderFrame = self.main.loader.loadTexture("src/textures/GUI/bar.png")
-        self.border = OnscreenImage(
-            image=borderFrame,
-            parent=self.guiFrame,
-            scale=(1.75 * (monitor[0].height / monitor[0].width), 1, 0.15),
-            pos=(0, 0, -0.9),
-        )
-        self.border.setTransparency(self.TransparencyAttrib.MAlpha)
-        self.border.hide()
-        self.main.crosshair = OnscreenImage(
-            image="src/textures/crosshairs.png",
-            pos=(0, 0, 0),
-            scale=(0.03 * (monitor[0].height / monitor[0].width), 0.03, 0.03),
-            parent=self.guiFrame,
-        )
-        self.main.crosshair.setTransparency(self.TransparencyAttrib.MAlpha)
-        self.main.crosshair.hide()
-
         self.main.HpIndicator = DirectWaitBar(
             parent=self.guiFrame,
             value=0,
@@ -350,6 +335,3 @@ class GUI:
             0.025 / (monitor[0].width / monitor[0].height),
             0.025,
         )
-
-    def HUD(self):
-        None

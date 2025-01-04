@@ -1,5 +1,3 @@
-from yaml import load, dump
-from yaml import CLoader as fLoader, CDumper as fDumper
 import os
 
 rootDir = os.path.curdir

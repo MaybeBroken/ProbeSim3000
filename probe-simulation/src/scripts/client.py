@@ -3,8 +3,6 @@ import time as t
 import asyncio
 import socket
 from direct.stdpy.threading import Thread
-from mss import mss
-from PIL import Image
 
 try:
     import websockets
