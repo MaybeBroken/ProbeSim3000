@@ -6,6 +6,7 @@ from direct.directtools.DirectGrid import DirectGrid
 from panda3d.core import deg2Rad, TextNode
 import simplepbr as pbr
 import sys
+import time as t
 
 monitor = None
 main = None
@@ -26,48 +27,47 @@ class ShaderCall:
                 intensity=0.25,
                 size="medium",
             )
-            filters.setExposureAdjust(0.1)
-            filters.setCartoonInk()
+            filters.setExposureAdjust(0.05)
             filters.setSrgbEncode()
             filters.setHighDynamicRange()
-            filters.setBlurSharpen(0.75)
+            filters.setBlurSharpen(0.5)
         ...
 
 
 class settingsScreen:
     def start(self):
         def updateDifficulty(arg):
-            if arg == "Blank                 |":
+            if arg == "Blank":
                 self.shipHealthSlider["value"] = 0
                 self.shipHitRadiusSlider["value"] = 0
                 self.droneHitRadiusSlider["value"] = 0
                 self.droneNum.set("0")
                 self.droneHealthSlider["value"] = 1
 
-            elif arg == "Easy                  |":
-                self.shipHealthSlider["value"] = 20
-                self.shipHitRadiusSlider["value"] = 2
-                self.droneHitRadiusSlider["value"] = 12
-                self.droneNum.set("5")
-                self.droneHealthSlider["value"] = 3
-            elif arg == "Medium            |":
-                self.shipHealthSlider["value"] = 15
-                self.shipHitRadiusSlider["value"] = 6
-                self.droneHitRadiusSlider["value"] = 8
+            elif arg == "Easy":
+                self.shipHealthSlider["value"] = 200
+                self.shipHitRadiusSlider["value"] = 3
+                self.droneHitRadiusSlider["value"] = 25
                 self.droneNum.set("10")
-                self.droneHealthSlider["value"] = 8
-            elif arg == "Difficult            |":
-                self.shipHealthSlider["value"] = 8
+                self.droneHealthSlider["value"] = 5
+            elif arg == "Medium":
+                self.shipHealthSlider["value"] = 120
+                self.shipHitRadiusSlider["value"] = 5
+                self.droneHitRadiusSlider["value"] = 10
+                self.droneNum.set("20")
+                self.droneHealthSlider["value"] = 12
+            elif arg == "Difficult":
+                self.shipHealthSlider["value"] = 60
                 self.shipHitRadiusSlider["value"] = 8
                 self.droneHitRadiusSlider["value"] = 5
-                self.droneNum.set("25")
-                self.droneHealthSlider["value"] = 16
-            elif arg == "Hard                  |":
-                self.shipHealthSlider["value"] = 3
-                self.shipHitRadiusSlider["value"] = 12
+                self.droneNum.set("32")
+                self.droneHealthSlider["value"] = 20
+            elif arg == "Hard":
+                self.shipHealthSlider["value"] = 40
+                self.shipHitRadiusSlider["value"] = 10
                 self.droneHitRadiusSlider["value"] = 3
-                self.droneNum.set("50")
-                self.droneHealthSlider["value"] = 32
+                self.droneNum.set("45")
+                self.droneHealthSlider["value"] = 30
 
         def updateGuiValues():
             self.shipHealthTitle["text"] = (
@@ -173,7 +173,7 @@ class settingsScreen:
         self.presetsTitle = OnscreenText(
             text="Presets: ",
             parent=self.settingsTopBar,
-            scale=0.02,
+            scale=0.025,
             pos=(-0.1, 0.69),
             fg=(1, 1, 1, 1),
             font=self.loader.loadFont("src/fonts/sector_034.ttf"),
@@ -181,18 +181,25 @@ class settingsScreen:
         self.presetsMenu = DirectOptionMenu(
             parent=self.settingsTopBar,
             items=[
-                "Blank                 |",
-                "Easy                  |",
-                "Medium            |",
-                "Difficult            |",
-                "Hard                  |",
+                "Blank",
+                "Easy",
+                "Medium",
+                "Difficult",
+                "Hard",
             ],
             command=updateDifficulty,
-            scale=0.06,
+            relief=DGG.FLAT,
+            scale=0.055,
             pos=(0.05, 1, 0.69),
             text_font=self.loader.loadFont("src/fonts/sector_034.ttf"),
             text_scale=0.6,
             text_pos=(0.3, 0, 0),
+            item_relief=DGG.FLAT,
+            item_text_font=self.loader.loadFont("src/fonts/sector_034.ttf"),
+            item_scale=1,
+            item_text_scale=0.6,
+            item_text_pos=(0, 0, 0.1),
+            item_frameSize=(-0.3, 1.3, -0.4, 0.8),
         )
 
         self.shipHealthTitle = OnscreenText(
@@ -205,9 +212,13 @@ class settingsScreen:
         )
         self.shipHealthSlider = DirectSlider(
             parent=self.settingsFrame,
-            range=(1, 32),
+            range=(40, 200),
             pageSize=1,
-            scale=0.15,
+            scale=0.2,
+            thumb_frameSize=(-0.05, 0.05, -0.08, 0.08),
+            thumb_relief=DGG.FLAT,
+            thumb_geom=None,
+            thumb_frameColor=(0.2, 0.3, 1, 1),
             pos=(0.25, 0, 0.485),
             command=updateGuiValues,
         )
@@ -224,7 +235,11 @@ class settingsScreen:
             parent=self.settingsFrame,
             range=(3, 15),
             pageSize=1,
-            scale=0.15,
+            scale=0.2,
+            thumb_frameSize=(-0.05, 0.05, -0.08, 0.08),
+            thumb_relief=DGG.FLAT,
+            thumb_geom=None,
+            thumb_frameColor=(0.2, 0.3, 1, 1),
             pos=(0.25, 0, 0.335),
             command=updateGuiValues,
         )
@@ -239,9 +254,13 @@ class settingsScreen:
         )
         self.droneHitRadiusSlider = DirectSlider(
             parent=self.settingsFrame,
-            range=(3, 15),
+            range=(1, 25),
             pageSize=1,
-            scale=0.15,
+            scale=0.2,
+            thumb_frameSize=(-0.05, 0.05, -0.08, 0.08),
+            thumb_relief=DGG.FLAT,
+            thumb_geom=None,
+            thumb_frameColor=(0.2, 0.3, 1, 1),
             pos=(0.25, 0, 0.175),
             command=updateGuiValues,
         )
@@ -273,9 +292,13 @@ class settingsScreen:
         )
         self.droneHealthSlider = DirectSlider(
             parent=self.settingsFrame,
-            range=(1, 32),
+            range=(1, 50),
             pageSize=1,
-            scale=0.15,
+            scale=0.2,
+            thumb_frameSize=(-0.05, 0.05, -0.08, 0.08),
+            thumb_relief=DGG.FLAT,
+            thumb_geom=None,
+            thumb_frameColor=(0.2, 0.3, 1, 1),
             pos=(0.25, 0, -0.3),
             command=updateGuiValues,
         )
@@ -301,6 +324,7 @@ class GUI:
         guiClass = self
 
     def setup(self):
+        t.sleep(0.1)
         self.main.HpIndicator = DirectWaitBar(
             parent=self.guiFrame,
             value=0,
@@ -308,6 +332,7 @@ class GUI:
             pos=(0, 0, -0.9),
             barColor=(1, 0, 0, 1),
         )
+        t.sleep(0.3)
         self.main.droneCount = OnscreenText(
             text="Drones Remaining: ",
             pos=(-0.8, 0.8),
@@ -317,11 +342,13 @@ class GUI:
             align=TextNode.ALeft,
             fg=(1, 1, 1, 1),
         )
+        t.sleep(0.3)
         self.main.displayOverlay = DirectFrame(parent=self.guiFrame)
         self.main.droneTargetIndicator = DirectFrame(parent=self.main.displayOverlay)
         self.main.droneTargetList = []
 
     def miniMap(self):
+        t.sleep(0.1)
         self.mapFrame = DirectFrame(
             parent=guiClass.guiFrame,
             pos=(0.9, 1, 0.9),
@@ -329,9 +356,12 @@ class GUI:
         )
         self.mapGeom = main.loader.loadModel("src/models/circle_grid/mesh.bam")
         self.mapGeom.reparentTo(self.mapFrame)
+        t.sleep(0.5)
         self.mapGeom.setHpr(0, 90, 0)
+        t.sleep(0.8)
         self.mapGeom.setScale(
             0.025 / (monitor[0].width / monitor[0].height),
             0.025 / (monitor[0].width / monitor[0].height),
             0.025,
         )
+        t.sleep(0.1)

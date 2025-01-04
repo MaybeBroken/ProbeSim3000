@@ -135,14 +135,19 @@ class Main(ShowBase):
 
     def load(self):
         self.guiFrame.hide()
-        self.startupMenuBackgroundImage.hide()
+        self.loadingText.setText("Loading Configs...")
+
         self.backfaceCullingOn()
+
+        t.sleep(0.2)
+        self.loadingBar.setValue(10)
+        self.loadingText.setText("Loading Controls...")
+
         self.disableMouse()
 
-        # do setup tasks
-        # ...
-
-        self.setupControls()
+        t.sleep(0.1)
+        self.loadingBar.setValue(15)
+        self.loadingText.setText("Loading GUI...")
 
         disp.GUI.start(
             self=disp.GUI,
@@ -151,6 +156,11 @@ class Main(ShowBase):
             TransparencyAttrib=TransparencyAttrib,
             _monitor=monitor,
         )
+
+        t.sleep(0.3)
+        self.loadingBar.setValue(20)
+        self.loadingText.setText("Loading Physics Engine...")
+
         physics.physicsMgr.enable(
             self=physics.physicsMgr,
             drag=0.001,
@@ -158,12 +168,54 @@ class Main(ShowBase):
             rotational_drag=0.15,
         )
 
+        t.sleep(2.1)
+        self.loadingBar.setValue(30)
+        self.loadingText.setText("Loading Models...")
+
         self.loadModels()
+
+        t.sleep(0.1)
+        self.loadingBar.setValue(40)
+        self.loadingText.setText("Setting up Scene Lights...")
+
         self.setupLights()
+
+        t.sleep(0.1)
+        self.loadingBar.setValue(50)
+        self.loadingText.setText("Setting up Camera and Model Collisions...")
+
         self.setupCamera()
+
+        t.sleep(0.1)
+        self.loadingBar.setValue(55)
+        self.loadingText.setText("Loading GUI...")
+
+        disp.GUI.setup(disp.GUI)
+        t.sleep(0.2)
+        disp.GUI.miniMap(disp.GUI)
+
+        t.sleep(0.1)
+        self.loadingBar.setValue(60)
+        self.loadingText.setText("Setting up Skybox...")
+
         self.setupSkybox()
+
+        t.sleep(0.1)
+        self.loadingBar.setValue(70)
+        self.loadingText.setText("Setting up Scene, Placing Models...")
+
         self.setupScene()
+
+        t.sleep(0.1)
+        self.loadingBar.setValue(80)
+        self.loadingText.setText("Creating AI's...")
+
         self.setupAiWorld()
+
+        t.sleep(0.1)
+        self.loadingBar.setValue(90)
+        self.loadingText.setText("Loading Weapons Module...")
+
         weapons.lasers.__init__(
             self=self,
             internalArgs=[
@@ -174,44 +226,94 @@ class Main(ShowBase):
                 ["sceneGraphs", ["render3d", self.render]],
             ],
         )
+        t.sleep(0.1)
+        self.loadingBar.setValue(93)
+        self.loadingText.setText("Putting it all together...")
+
         self.postLoad()
+
+        t.sleep(0.1)
+        self.loadingBar.setValue(100)
+        self.loadingText.setText("Done!")
 
         # end of setup tasks
         self.update_time = 0
         self.currentDroneCount = Wvars.droneNum
         self.lastDroneCount = 0
+        t.sleep(1)
         thread.Thread(target=self.update, name="update_task").start()
         thread.Thread(
             target=cli.runClient, args=[self, "client"], name="ClientThread"
         ).start()
+        thread.Thread(
+            target=self.fixMotionTrailThread, name="fixMotionTrailThread"
+        ).start()
+        self.startupMenuBackgroundImage.hide()
+        self.setupControls()
+        self.hideCursor(True)
+
+    def fixMotionTrailThread(self):
+        while True:
+            self.ship.setPos(
+                self.ship.getX(), self.ship.getY(), self.ship.getZ() + 0.0001
+            )
+            t.sleep(1 / 50)
 
     def postLoad(self):
-        disp.GUI.miniMap(disp.GUI)
         Wvars.shipHitPoints = Wvars.shipHealth
-
         #
 
+        t.sleep(0.1)
         self.static = self.startPlayer(
             media_file="src/movies/GUI/static.mp4", name="static"
         )
+        t.sleep(0.1)
         self.static.setTransparency(True)
         self.static.setAlphaScale(0)
         self.playTex("static")
+        t.sleep(0.1)
         self.death = self.startPlayer(
             media_file="src/movies/GUI/death.mp4", name="death"
         )
         self.death.setTransparency(True)
         self.death.hide()
+        t.sleep(0.1)
         self.playTex("death")
 
         self.velocityMeter.hide()
         self.posMeter.hide()
+        t.sleep(0.1)
         self.HpIndicator["range"] = Wvars.shipHealth
         self.HpIndicator["value"] = Wvars.shipHitPoints
         ai.setupShipHealth(self.HpIndicator)
+        t.sleep(0.1)
+
+        # WARNING! THIS IS HEAVY ON THE CPU!
         self.render.prepareScene(self.win.getGsg())
         self.voyager.flattenLight()
+        # WARNING! THIS IS HEAVY ON THE CPU!
+        t.sleep(0.4)
+
         self.taskMgr.add(self.update_shader_inputs, "update_shader_inputs_task")
+
+    def loadThread(self):
+        self.loadingText = OnscreenText(
+            text="Loading...",
+            scale=0.1,
+            pos=(0, 0),
+            fg=(1, 1, 1, 1),
+            parent=self.aspect2d,
+        )
+        self.loadingBar = DirectWaitBar(
+            parent=self.aspect2d,
+            range=100,
+            value=0,
+            pos=(0, 0, -0.1),
+            scale=0.5,
+        )
+        self.loadingText.reparentTo(self.startupMenuBackgroundImage)
+        self.loadingBar.reparentTo(self.startupMenuBackgroundImage)
+        thread.Thread(target=self.load, name="load_task").start()
 
     def configIp(self):
         cli.serveIPAddr = self.ipEntry.get()
@@ -220,7 +322,7 @@ class Main(ShowBase):
             asyncio.run(cli.testServerConnection())
             print("Connected to server")
             self.notify_win("Connected to server")
-            self.startupMenuStartButton["command"] = self.load
+            self.startupMenuStartButton["command"] = self.loadThread
             self.startupMenuStartButton["extraArgs"] = []
             self.startupMenuStartButton.setColor(1, 1, 1, 1)
             self.startupMenuStartButton["text"] = ""
@@ -577,6 +679,7 @@ class Main(ShowBase):
         self.accept("mouse1-up", self.doNothing)
         # self.accept("mouse3", self.toggleTargetingGui)
         # self.accept("mouse3-up", self.toggleTargetingGui)
+        t.sleep(0.1)
 
         self.accept("w", self.updateKeyMap, ["forward", True])
         self.accept("w-up", self.updateKeyMap, ["forward", False])
@@ -596,6 +699,7 @@ class Main(ShowBase):
         self.accept("e-up", self.updateKeyMap, ["tiltRight", False])
         self.accept("wheel_up", self.devModeOn)
         self.accept("wheel_down", self.devModeOff)
+        t.sleep(0.1)
         # self.accept("control-wheel_up", self.cameraZoom, ["in"])
         # self.accept("control-wheel_down", self.cameraZoom, ["out"])
         # self.accept("f", self.fullStop)
@@ -669,21 +773,25 @@ class Main(ShowBase):
             object=self.camNodePath,
             name="camNodePath",
         )
-        
 
     def loadModels(self):
+        t.sleep(0.1)
         self.sun = self.loader.loadModel("src/models/sun/sun.egg")
+        t.sleep(0.1)
         self.skybox = self.loader.loadModel("src/models/skybox/box.bam")
-        self.ship = self.loader.loadModel("src/models/simple_ship/model.egg")
+        t.sleep(0.1)
+        self.ship = self.loader.loadModel("src/models/Ship-2.0/probe-2.0.bam")
+        t.sleep(0.1)
         try:
             self.voyager = self.loader.loadModel("src/models/voyager/voyager.bam")
         except:
             self.voyager = self.loader.loadModel("src/models/drone/cube.egg")
+        t.sleep(0.1)
         try:
             self.drone = self.loader.loadModel("src/models/drone/drone.bam")
         except:
             self.drone = self.loader.loadModel("src/models/drone/cube.egg")
-        disp.GUI.setup(disp.GUI)
+        t.sleep(0.1)
 
     def setupLights(self):
         ambientLight = AmbientLight("ambientLight")
@@ -691,11 +799,15 @@ class Main(ShowBase):
         ambientLightNP = self.render.attachNewNode(ambientLight)
         self.render.setLight(ambientLightNP)
 
+        t.sleep(0.1)
+
         slight = Spotlight("slight")
         slight.setColor((2, 2, 2, 1))
         lens = OrthographicLens()
         lens.setFocalLength(20)
         slight.setLens(lens)
+
+        t.sleep(0.1)
 
         self.SceneLightNode_sm = self.render.attachNewNode(slight)
         self.SceneLightNode_sm.setPos(10000, 0, 1000)
@@ -707,6 +819,8 @@ class Main(ShowBase):
         self.camNodePath.reparentTo(self.render)
 
         self.ship.reparentTo(self.render)
+        self.ship.setScale(6)
+        t.sleep(0.1)
 
         physics.physicsMgr.registerObject(
             self=physics.physicsMgr,
@@ -731,6 +845,7 @@ class Main(ShowBase):
             vertex="src/shaders/flat_v.glsl",
             fragment="src/shaders/post1_hsv_f.glsl",
         )
+        t.sleep(0.1)
 
         # Add a transparent card over the screen
         cm = CardMaker("fullscreenCard")
@@ -748,8 +863,10 @@ class Main(ShowBase):
         self.shaderCard.reparentTo(self.render2d)
         self.shaderCard.setColor(0, 0, 0, 1)
 
+        t.sleep(0.1)
+
         self.camera.reparentTo(self.camNodePath)
-        self.camera.setPos(0, -50, 40)
+        self.camera.setPos(0, -70, 50)
         self.camLens.setFov(Wvars.camFOV)
         self.camera.lookAt(self.ship)
 
@@ -762,6 +879,8 @@ class Main(ShowBase):
         pusher = CollisionHandlerPusher()
         pusher.addCollider(fromObject, self.ship)
         self.cTrav.addCollider(fromObject, pusher)
+
+        t.sleep(0.1)
 
         fromObject = self.camera.attachNewNode(CollisionNode("cameraColNode"))
         fromObject.node().addSolid(CollisionSphere(0, 0, 0, 1.5))
@@ -780,6 +899,8 @@ class Main(ShowBase):
         self.rayQueue = CollisionHandlerQueue()
         self.cTrav.addCollider(self.rayNodePath, self.rayQueue)
 
+        t.sleep(0.1)
+
         targetNode = NodePath("targetingNode")
         targetNode.reparentTo(self.ship)
         targetNode.set_y(45)
@@ -791,6 +912,8 @@ class Main(ShowBase):
         fromObject.node().set_from_collide_mask(0)
         fromObject.node().setPythonTag("owner", targetNode)
         fromObject.set_y(10000)
+
+        t.sleep(0.1)
 
         sNodeSolid = CollisionNode("block-collision-node")
         collider = self.ship.attachNewNode(sNodeSolid)
@@ -805,7 +928,8 @@ class Main(ShowBase):
             wantShaders=True,
         )
 
-        self.hideCursor(True)
+        t.sleep(0.1)
+
         self.velocityMeter = OnscreenText(
             text="",
             scale=(0.1 * (monitor[0].height / monitor[0].width), 0.1, 0.1),
@@ -828,18 +952,23 @@ class Main(ShowBase):
         self.win.requestProperties(properties)
 
     def setupSkybox(self):
+        t.sleep(0.1)
         self.skybox.setScale(5000)
         self.skybox.setBin("background", 1)
         self.skybox.setDepthWrite(0)
         self.skybox.setLightOff()
+        t.sleep(0.1)
         self.skybox.setAntialias(AntialiasAttrib.MNone)
         self.skybox.setColor(0.5, 0.5, 0.5, 0.5)
+        t.sleep(0.1)
         self.skybox.reparentTo(self.render)
 
     def setupAiWorld(self):
         self.AIworld = AIWorld(self.render)
         self.aiChars = []
+        t.sleep(0.1)
         for num in range(Wvars.droneNum):
+            t.sleep(0.1)
             dNode = self.loader.loadModel("src/models/drone/cube.egg")
             dNode.instanceTo(self.droneMasterNode)
             dNode.setPos(randint(-500, 500), randint(-400, 300), randint(-50, 50))
@@ -852,6 +981,7 @@ class Main(ShowBase):
                 max_force=50,
             )
             self.AIworld.addAiChar(AIchar)
+            t.sleep(0.1)
 
             size = Wvars.droneHitRadius
 
@@ -863,6 +993,7 @@ class Main(ShowBase):
             pusher = CollisionHandlerPusher()
             pusher.addCollider(fromObject, dNode)
             self.cTrav.addCollider(fromObject, pusher)
+            t.sleep(0.1)
 
             healthIndicatorFrame = DirectFrame(parent=dNode, pos=(0, 0, 1), scale=5)
             healthBar = DirectWaitBar(
@@ -881,7 +1012,7 @@ class Main(ShowBase):
                 "health": Wvars.droneHealth,
                 "healthBar": healthBar,
             }
-
+            t.sleep(0.1)
             self.aiChars.append(aiObject)
             ai.fireLoop(self.ship, aiObject)
 
@@ -891,19 +1022,31 @@ class Main(ShowBase):
         droneNodeSolid = CollisionNode("block-collision-node")
         droneNodeSolid.addSolid(droneNode)
 
+        t.sleep(0.1)
+
         self.voyager.reparentTo(self.render)
         self.voyager.setScale(280)
         self.voyager.setPos(-3000, 1500, 100)
         self.camera.lookAt(self.voyager)
 
+        t.sleep(0.1)
+
         self.droneMasterNode = NodePath("drone-MN")
         self.droneMasterNode.reparentTo(self.render)
 
+        t.sleep(0.1)
+
         self.shipTrailNode = NodePath("shipTrailNode")
         self.shipTrailNode.reparentTo(self.ship)
-        self.shipTrailNode.set_y(-10)
+        self.shipTrailNode.set_y(-5.8)
+        self.shipTrailNode.setScale(0.2)
+        self.shipTrailNode.set_x(-0.18)
+        self.shipTrailNode.set_z(0.3)
 
-        for x in [-6, 6]:
+        t.sleep(0.1)
+
+        for x in [-2.35, 4.1]:
+            t.sleep(0.1)
             shipTrail = MotionTrail("shipTrail", self.shipTrailNode)
 
             flame_colors = (
@@ -918,6 +1061,7 @@ class Main(ShowBase):
             center.set_x(x)
             res = 8
             for i in range(res + 1):
+                t.sleep(0.01)
                 center.set_r((360 / res) * i)
                 vertex_pos = around.get_pos(self.render)
                 shipTrail.add_vertex(vertex_pos)
@@ -1023,7 +1167,9 @@ class Main(ShowBase):
         destroyButton.setName("button")
         notifyFrame.setTransparency(True)
 
-        thread.Thread(target=destroyThread, args=[notifyFrame, 2, 0.6], name="destroyThread").start()
+        thread.Thread(
+            target=destroyThread, args=[notifyFrame, 2, 0.6], name="destroyThread"
+        ).start()
         return notifyFrame
 
 
