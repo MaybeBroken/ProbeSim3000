@@ -53,7 +53,7 @@ def fireLoop(ship, char):
                 droneFire(ship, node, char)
             sleep(randint(2, 5))
 
-    Thread(target=_loop).start()
+    Thread(target=_loop, name="AI loop").start()
 
 
 def removeChar(ai, ship):

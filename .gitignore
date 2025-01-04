@@ -7,3 +7,5 @@ probe-simulation/src/models/drone/drone.bam
 probe-simulation/src/movies/GUI/static.mp4
 probe-simulation/src/models/skybox/box.blend
 probe-simulation/src/models/skybox/box.blend1
+installer_data/ProbeSim3000-Server-Installer.exe
+installer_data/ProbeSim3000-Installer.exe
