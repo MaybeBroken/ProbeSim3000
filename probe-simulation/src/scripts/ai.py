@@ -40,7 +40,7 @@ def droneFire(target, origin, self):
             shipHealth["value"] -= 1
         except:
             ...
-    lasers.fire(origin=origin, target=totalTarget, destroy=False)
+    lasers.fire(self=self, origin=origin, target=totalTarget, destroy=False)
 
 
 def fireLoop(ship, char, self):
@@ -68,21 +68,32 @@ def resumeAll(aiChars, target):
         behaviors(ai).PURSUE(target)
 
 
-def update(AIworld, aiChars, ship):
+def destroyChar(aiChars, char: dict, waitTime: float):
+    def _internal():
+        sleep(waitTime)
+        char["active"] = False
+        char["mesh"].hide()
+        aiChars.remove(char)
+
+    return Thread(target=_internal, name="destroyChar").start()
+
+
+def update(aiChars, ship, self):
     while True:
         for char in aiChars:
             ai = char["ai"]
             node = char["mesh"]
             if char["active"]:
-                if ship.getDistance(node) > 150:
+                if ship.getDistance(node) > 400:
                     behaviors(ai).PURSUE(ship)
                 else:
                     behaviors(ai).REMOVE("pursue")
                     node.lookAt((ship.get_x(), ship.get_y(), ship.get_z()))
                     node.setP(node.getP() + 180)
                     node.setR(node.getR() + 180)
-                    if shipHealth["value"] > 0 and randint(0, 100) < 5:
-                        fireLoop(ship, char, self=aiChars)
+                    if shipHealth["value"] > 0 and randint(0, 100) < 20:
+                        fireLoop(ship=ship, char=char, self=self)
             else:
                 behaviors(ai).FLEE(ship, 10000, 10000, 1)
-        sleep(0.25)
+                destroyChar(aiChars=aiChars, char=char, waitTime=0)
+        sleep(0.08)
