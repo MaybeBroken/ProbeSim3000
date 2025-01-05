@@ -5,6 +5,18 @@ import time as t
 import sys
 
 try:
+    import psutil
+except ImportError:
+    os.system("python3 -m pip install psutil")
+    import psutil
+try:
+    import GPUtil
+except ImportError:
+    os.system("python3 -m pip install gputil")
+    import GPUtil
+
+
+try:
     import websockets as ws
 except ImportError:
     os.system("python3 -m pip install websockets")
@@ -74,6 +86,7 @@ try:
     import src.scripts.weapons as weapons
     import src.scripts.ai as ai
     import src.scripts.guiUtils as guiUtils
+    import src.scripts.UTILS as UTILS
 except ImportError as e:
     print(e)
     print(
@@ -827,11 +840,6 @@ class Main(ShowBase):
         except:
             self.voyager = self.loader.loadModel("src/models/drone/cube.egg")
         t.sleep(0.1)
-        try:
-            self.drone = self.loader.loadModel("src/models/drone/drone.bam")
-        except:
-            self.drone = self.loader.loadModel("src/models/drone/cube.egg")
-        t.sleep(0.1)
         self.laserModel = self.loader.loadModel("src/models/laser/laser.bam")
         t.sleep(0.1)
 
@@ -966,7 +974,7 @@ class Main(ShowBase):
         t.sleep(0.3)
         for num in range(Wvars.droneNum):
             self.loadingText.setText(f"Creating AI {num+1}/{Wvars.droneNum} ...")
-            dNode = self.loader.loadModel("src/models/drone/cube.egg")
+            dNode = self.loader.loadModel("src/models/drone/drone.bam")
             dNode.instanceTo(self.droneMasterNode)
             distance = randint(2000, 4000)
             spread = randint(-100, 100)
@@ -1169,6 +1177,37 @@ class Main(ShowBase):
             target=destroyThread, args=[notifyFrame, 2, 0.6], name="destroyThread"
         ).start()
         return notifyFrame
+
+
+def get_system_usage():
+    cpu_usage = psutil.cpu_percent(interval=1)
+    memory_info = psutil.virtual_memory()
+    memory_usage = memory_info.percent
+    gpu_usage = None
+
+    try:
+        gpus = GPUtil.getGPUs()
+        if gpus:
+            gpu_usage = gpus[0].load * 100
+    except ImportError:
+        pass
+
+    return cpu_usage, memory_usage, gpu_usage
+
+
+def print_system_usage():
+    while True:
+        try:
+            cpu_usage, memory_usage, gpu_usage = get_system_usage()
+            print(
+                f"CPU Usage: {cpu_usage}%\nMemory Usage: {memory_usage}%\nGPU Usage: {gpu_usage}%{UTILS.CLI.Control.up(1)}"
+            )
+            t.sleep(1)
+        except Exception as e:
+            print(e)
+
+
+thread.Thread(target=print_system_usage, name="system_usage_thread").start()
 
 
 Main().run()

@@ -1,8 +1,5 @@
 from panda3d.core import Material, NodePath, Filename
 from direct.stdpy.threading import Thread
-from src.scripts.guiUtils import fade
-from direct.particles.ParticleEffect import ParticleEffect
-from src.scripts.UTILS import getDistance
 import time as t
 
 

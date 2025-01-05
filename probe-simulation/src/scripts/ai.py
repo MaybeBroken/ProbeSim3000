@@ -40,7 +40,7 @@ def droneFire(target, origin, self):
             shipHealth["value"] -= 1
         except:
             ...
-    lasers.fire(self=self, origin=origin, target=totalTarget, destroy=False)
+    lasers.fire(self=self, origin=origin, target=totalTarget)
 
 
 def fireLoop(ship, char, self):
