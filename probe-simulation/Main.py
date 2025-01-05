@@ -891,22 +891,7 @@ class Main(ShowBase):
 
         self.cTrav = CollisionTraverser()
 
-        fromObject = self.ship.attachNewNode(CollisionNode("shipColNode"))
-        fromObject.node().addSolid(CollisionSphere(0, 0, 0, Wvars.shipHitRadius))
-        fromObject.node().set_from_collide_mask(1)
-        fromObject.node().set_from_collide_mask(0)
-        pusher = CollisionHandlerPusher()
-        pusher.addCollider(fromObject, self.ship)
-        self.cTrav.addCollider(fromObject, pusher)
-
         t.sleep(0.1)
-
-        fromObject = self.camera.attachNewNode(CollisionNode("cameraColNode"))
-        fromObject.node().addSolid(CollisionSphere(0, 0, 0, 1.5))
-        fromObject.node().set_from_collide_mask(1)
-        fromObject.node().set_from_collide_mask(0)
-        pusher.addCollider(fromObject, self.camera, self.drive.node())
-        self.cTrav.addCollider(fromObject, pusher)
 
         self.ray = CollisionRay()
         self.ray.setFromLens(self.camNode, (0, 0))
@@ -930,7 +915,7 @@ class Main(ShowBase):
         fromObject.node().addSolid(CollisionSphere(0, 0, 0, size))
         fromObject.node().set_from_collide_mask(0)
         fromObject.node().setPythonTag("owner", targetNode)
-        fromObject.set_y(10000)
+        fromObject.set_y(1000)
 
         t.sleep(0.1)
 
