@@ -36,8 +36,8 @@ class _firing:
         def _moveThread(model, ship):
             fireDistance = 150
             while model.getDistance(ship) < fireDistance:
-                model.setPos(model, 0, 0.1, 0)
-                t.sleep(0.001)
+                model.setPos(model, 0, 0.01, 0)
+                t.sleep(0.0001)
             model.removeNode()
 
         Thread(target=_moveThread, name="Lsr-move", args=(model, self.ship)).start()
