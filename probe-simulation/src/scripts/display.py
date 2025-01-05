@@ -19,15 +19,15 @@ class ShaderCall:
         if wantShaders == True:
             mainApp.render.setShaderAuto()
             filters = CommonFilters(mainApp.win, mainApp.cam)
+            filters.setExposureAdjust(1)
             filters.setBloom(
                 blend=(0.3, 0.4, 0.3, 0.8),
-                mintrigger=0.75,
+                mintrigger=0.65,
                 maxtrigger=1,
                 desat=0.1,
                 intensity=0.25,
                 size="medium",
             )
-            filters.setExposureAdjust(0.05)
             filters.setSrgbEncode()
             filters.setHighDynamicRange()
             filters.setBlurSharpen(0.5)
@@ -342,6 +342,7 @@ class GUI:
             align=TextNode.ALeft,
             fg=(1, 1, 1, 1),
         )
+        self.main.droneCount.hide()
         t.sleep(0.3)
         self.main.displayOverlay = DirectFrame(parent=self.guiFrame)
         self.main.droneTargetIndicator = DirectFrame(parent=self.main.displayOverlay)
@@ -356,12 +357,10 @@ class GUI:
         )
         self.mapGeom = main.loader.loadModel("src/models/circle_grid/mesh.bam")
         self.mapGeom.reparentTo(self.mapFrame)
-        t.sleep(0.5)
         self.mapGeom.setHpr(0, 90, 0)
-        t.sleep(0.8)
         self.mapGeom.setScale(
             0.025 / (monitor[0].width / monitor[0].height),
             0.025 / (monitor[0].width / monitor[0].height),
             0.025,
         )
-        t.sleep(0.1)
+        self.mapGeom.hide()

@@ -134,123 +134,146 @@ class Main(ShowBase):
         )
 
     def load(self):
-        self.guiFrame.hide()
-        self.loadingText.setText("Loading Configs...")
+        try:
+            self.guiFrame.hide()
+            self.loadingText.setText("Loading Configs...")
 
-        self.backfaceCullingOn()
+            self.backfaceCullingOn()
 
-        t.sleep(0.2)
-        self.loadingBar.setValue(10)
-        self.loadingText.setText("Loading Controls...")
+            t.sleep(0.2)
+            self.loadingBar["value"] = 10
+            self.loadingBar.setValue()
+            self.loadingText.setText("Loading Controls...")
 
-        self.disableMouse()
+            self.disableMouse()
 
-        t.sleep(0.1)
-        self.loadingBar.setValue(15)
-        self.loadingText.setText("Loading GUI...")
+            t.sleep(0.1)
+            self.loadingBar["value"] = 15
+            self.loadingBar.setValue()
+            self.loadingText.setText("Loading GUI...")
 
-        disp.GUI.start(
-            self=disp.GUI,
-            render=self.render2d,
-            _main=self,
-            TransparencyAttrib=TransparencyAttrib,
-            _monitor=monitor,
-        )
+            disp.GUI.start(
+                self=disp.GUI,
+                render=self.render2d,
+                _main=self,
+                TransparencyAttrib=TransparencyAttrib,
+                _monitor=monitor,
+            )
 
-        t.sleep(0.3)
-        self.loadingBar.setValue(20)
-        self.loadingText.setText("Loading Physics Engine...")
+            t.sleep(0.3)
+            self.loadingBar["value"] = 20
+            self.loadingBar.setValue()
+            self.loadingText.setText("Loading Physics Engine...")
 
-        physics.physicsMgr.enable(
-            self=physics.physicsMgr,
-            drag=0.001,
-            gravity=(0, 0, 0),
-            rotational_drag=0.15,
-        )
+            physics.physicsMgr.enable(
+                self=physics.physicsMgr,
+                drag=0.001,
+                gravity=(0, 0, 0),
+                rotational_drag=0.11,
+            )
 
-        t.sleep(2.1)
-        self.loadingBar.setValue(30)
-        self.loadingText.setText("Loading Models...")
+            t.sleep(2.1)
+            self.loadingBar["value"] = 30
+            self.loadingBar.setValue()
+            self.loadingText.setText("Loading Models...")
 
-        self.loadModels()
+            self.loadModels()
 
-        t.sleep(0.1)
-        self.loadingBar.setValue(40)
-        self.loadingText.setText("Setting up Scene Lights...")
+            t.sleep(0.1)
+            self.loadingBar["value"] = 40
+            self.loadingBar.setValue()
+            self.loadingText.setText("Setting up Scene Lights...")
 
-        self.setupLights()
+            self.setupLights()
 
-        t.sleep(0.1)
-        self.loadingBar.setValue(50)
-        self.loadingText.setText("Setting up Camera and Model Collisions...")
+            t.sleep(0.1)
+            self.loadingBar["value"] = 50
+            self.loadingBar.setValue()
+            self.loadingText.setText("Setting up Camera and Model Collisions...")
 
-        self.setupCamera()
+            self.setupCamera()
 
-        t.sleep(0.1)
-        self.loadingBar.setValue(55)
-        self.loadingText.setText("Loading GUI...")
+            t.sleep(0.1)
+            self.loadingBar["value"] = 55
+            self.loadingBar.setValue()
+            self.loadingText.setText("Loading GUI...")
 
-        disp.GUI.setup(disp.GUI)
-        t.sleep(0.2)
-        disp.GUI.miniMap(disp.GUI)
+            disp.GUI.setup(disp.GUI)
+            t.sleep(0.2)
+            disp.GUI.miniMap(disp.GUI)
 
-        t.sleep(0.1)
-        self.loadingBar.setValue(60)
-        self.loadingText.setText("Setting up Skybox...")
+            t.sleep(0.1)
+            self.loadingBar["value"] = 60
+            self.loadingBar.setValue()
+            self.loadingText.setText("Setting up Skybox...")
 
-        self.setupSkybox()
+            self.setupSkybox()
 
-        t.sleep(0.1)
-        self.loadingBar.setValue(70)
-        self.loadingText.setText("Setting up Scene, Placing Models...")
+            t.sleep(0.1)
+            self.loadingBar["value"] = 70
+            self.loadingBar.setValue()
+            self.loadingText.setText("Setting up Scene, Placing Models...")
 
-        self.setupScene()
+            self.setupScene()
 
-        t.sleep(0.1)
-        self.loadingBar.setValue(80)
-        self.loadingText.setText("Creating AI's...")
+            t.sleep(0.1)
+            self.loadingBar["value"] = 80
+            self.loadingBar.setValue()
+            self.loadingText.setText("Creating AI's...")
 
-        self.setupAiWorld()
+            self.setupAiWorld()
 
-        t.sleep(0.1)
-        self.loadingBar.setValue(90)
-        self.loadingText.setText("Loading Weapons Module...")
+            t.sleep(0.1)
+            self.loadingBar["value"] = 90
+            self.loadingBar.setValue()
+            self.loadingText.setText("Loading Weapons Module...")
 
-        weapons.lasers.__init__(
-            self=self,
-            internalArgs=[
-                [
-                    "objects",
-                    ["cube", self.loader.loadModel("src/models/drone/cube.egg")],
-                ],
-                ["sceneGraphs", ["render3d", self.render]],
-            ],
-        )
-        t.sleep(0.1)
-        self.loadingBar.setValue(93)
-        self.loadingText.setText("Putting it all together...")
+            weapons.lasers.__init__(self)
 
-        self.postLoad()
+            t.sleep(0.1)
+            self.loadingBar["value"] = 93
+            self.loadingBar.setValue()
+            self.loadingText.setText("Putting it all together...")
 
-        t.sleep(0.1)
-        self.loadingBar.setValue(100)
-        self.loadingText.setText("Done!")
+            self.postLoad()
 
-        # end of setup tasks
-        self.update_time = 0
-        self.currentDroneCount = Wvars.droneNum
-        self.lastDroneCount = 0
-        t.sleep(1)
-        thread.Thread(target=self.update, name="update_task").start()
-        thread.Thread(
-            target=cli.runClient, args=[self, "client"], name="ClientThread"
-        ).start()
-        thread.Thread(
-            target=self.fixMotionTrailThread, name="fixMotionTrailThread"
-        ).start()
-        self.startupMenuBackgroundImage.hide()
-        self.setupControls()
-        self.hideCursor(True)
+            t.sleep(0.1)
+            self.loadingBar["value"] = 100
+            self.loadingBar.setValue()
+            self.loadingText.setText("Done!")
+
+            # end of setup tasks
+            self.update_time = 0
+            self.currentDroneCount = Wvars.droneNum
+            self.lastDroneCount = 0
+            t.sleep(1)
+            self.loadingBar.hide()
+            self.loadingText.setText("Press Space to Connect to Probe")
+
+            def _start():
+                self.startupMenuBackgroundImage.hide()
+                self.loadingText.hide()
+                self.droneCount.show()
+                thread.Thread(target=self.update, name="update_task").start()
+                thread.Thread(
+                    target=cli.runClient, args=[self, "client"], name="ClientThread"
+                ).start()
+                thread.Thread(
+                    target=self.fixMotionTrailThread, name="fixMotionTrailThread"
+                ).start()
+                thread.Thread(
+                    target=ai.update,
+                    args=(self.AIworld, self.aiChars, self.ship),
+                    name="AIUpdateThread",
+                ).start()
+                self.setupControls()
+                self.hideCursor(True)
+
+            self.accept("space", _start)
+        except Exception as e:
+            print(e)
+            self.notify_win("Failed to load!\nreason: " + str(e).split(" ")[0])
+            sys.exit(1)
 
     def fixMotionTrailThread(self):
         while True:
@@ -298,11 +321,11 @@ class Main(ShowBase):
 
     def loadThread(self):
         self.loadingText = OnscreenText(
+            parent=self.aspect2d,
             text="Loading...",
             scale=0.1,
             pos=(0, 0),
             fg=(1, 1, 1, 1),
-            parent=self.aspect2d,
         )
         self.loadingBar = DirectWaitBar(
             parent=self.aspect2d,
@@ -311,8 +334,6 @@ class Main(ShowBase):
             pos=(0, 0, -0.1),
             scale=0.5,
         )
-        self.loadingText.reparentTo(self.startupMenuBackgroundImage)
-        self.loadingBar.reparentTo(self.startupMenuBackgroundImage)
         thread.Thread(target=self.load, name="load_task").start()
 
     def configIp(self):
@@ -395,7 +416,7 @@ class Main(ShowBase):
                     self.death.show()
                     self.check_resume()
             else:
-                ai.update(AIworld=self.AIworld, aiChars=self.aiChars, ship=self.ship)
+                self.AIworld.update()
                 self.currentDroneCount = len(
                     list(_ai for _ai in self.aiChars if _ai["active"])
                 )
@@ -461,42 +482,54 @@ class Main(ShowBase):
                             self=physics.physicsMgr,
                             object=self.ship,
                             name="ship",
-                            rotational_vector=[Wvars.turnspeed / 250, 0, 0],
+                            rotational_vector=[Wvars.turnspeed / 350, 0, 0],
+                        )
+                        physics.physicsMgr.addRotationalForce(
+                            self=physics.physicsMgr,
+                            object=self.camNodePath,
+                            name="camNodePath",
+                            rotational_vector=[Wvars.turnspeed / 500, 0, 0],
                         )
                     if self.keyMap["right"]:
                         physics.physicsMgr.addRotationalForce(
                             self=physics.physicsMgr,
                             object=self.ship,
                             name="ship",
-                            rotational_vector=[-Wvars.turnspeed / 250, 0, 0],
+                            rotational_vector=[-Wvars.turnspeed / 350, 0, 0],
+                        )
+                        physics.physicsMgr.addRotationalForce(
+                            self=physics.physicsMgr,
+                            object=self.camNodePath,
+                            name="camNodePath",
+                            rotational_vector=[-Wvars.turnspeed / 500, 0, 0],
                         )
                     if self.keyMap["up"]:
                         physics.physicsMgr.addRotationalForce(
                             self=physics.physicsMgr,
                             object=self.ship,
                             name="ship",
-                            rotational_vector=[0, Wvars.turnspeed / 250, 0],
+                            rotational_vector=[0, Wvars.turnspeed / 350, 0],
                         )
                     if self.keyMap["down"]:
                         physics.physicsMgr.addRotationalForce(
                             self=physics.physicsMgr,
                             object=self.ship,
                             name="ship",
-                            rotational_vector=[0, -Wvars.turnspeed / 250, 0],
+                            rotational_vector=[0, -Wvars.turnspeed / 350, 0],
                         )
                     if self.keyMap["tiltRight"]:
                         physics.physicsMgr.addRotationalForce(
                             self=physics.physicsMgr,
                             object=self.ship,
                             name="ship",
-                            rotational_vector=[0, 0, Wvars.turnspeed / 250],
+                            rotational_vector=[0, 0, Wvars.turnspeed / 300],
                         )
                     if self.keyMap["tiltLeft"]:
                         physics.physicsMgr.addRotationalForce(
                             self=physics.physicsMgr,
                             object=self.ship,
                             name="ship",
-                            rotational_vector=[0, 0, -Wvars.turnspeed / 250],
+                            rotational_vector=[0, 0, -Wvars.turnspeed / 300],
                         )
                     if self.keyMap["forward"]:
                         self.x_movement -= (
@@ -547,9 +580,9 @@ class Main(ShowBase):
                             object=self.camNodePath,
                             name="camNodePath",
                             rotational_vector=[
-                                -mouseChangeX / 100,
+                                -mouseChangeX / 150,
                                 -mouseChangeY
-                                / 100
+                                / 150
                                 * (monitor[0].width / monitor[0].height),
                                 0,
                             ],
@@ -792,6 +825,8 @@ class Main(ShowBase):
         except:
             self.drone = self.loader.loadModel("src/models/drone/cube.egg")
         t.sleep(0.1)
+        self.laserModel = self.loader.loadModel("src/models/laser/laser.bam")
+        t.sleep(0.1)
 
     def setupLights(self):
         ambientLight = AmbientLight("ambientLight")
@@ -1014,7 +1049,7 @@ class Main(ShowBase):
             }
             t.sleep(0.1)
             self.aiChars.append(aiObject)
-            ai.fireLoop(self.ship, aiObject)
+            ai.fireLoop(ship=self.ship, char=aiObject, self=self)
 
     def setupScene(self):
 
@@ -1110,7 +1145,11 @@ class Main(ShowBase):
                 return
             else:
                 weapons.lasers.fire(
-                    origin=self.ship, target=hitObject, normal=normal, destroy=destroy
+                    self=self,
+                    origin=self.ship,
+                    target=hitObject,
+                    normal=normal,
+                    destroy=destroy,
                 )
 
     def update_shader_inputs(self, task):
