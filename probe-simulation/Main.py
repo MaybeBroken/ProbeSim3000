@@ -1200,9 +1200,9 @@ def print_system_usage():
         try:
             cpu_usage, memory_usage, gpu_usage = get_system_usage()
             print(
-                f"CPU Usage: {cpu_usage}%\nMemory Usage: {memory_usage}%\nGPU Usage: {gpu_usage}%{UTILS.CLI.Control.up(1)}"
+                f"CPU Usage: {int(cpu_usage)}%          \nMemory Usage: {int(memory_usage)}%          \nGPU Usage: {int(gpu_usage)}%          {UTILS.CLI.Control.up(3)}"
             )
-            t.sleep(1)
+            t.sleep(0.1)
         except Exception as e:
             print(e)
 
