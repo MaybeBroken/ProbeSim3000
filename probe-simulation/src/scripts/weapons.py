@@ -7,7 +7,7 @@ laserBeams = []
 
 
 class _firing:
-    def addLaser(self, data):
+    def addLaser(self, data, hitObjectFull=None, colNode=None):
         origin = data["origin"]
         target = data["target"]
         distance = origin.getDistance(target)
@@ -34,10 +34,20 @@ class _firing:
 
         def _moveThread(model, ship):
             fireDistance = 150
-            while model.getDistance(ship) < fireDistance:
+            threadRunningTime = 0
+            while model.getDistance(ship) < fireDistance and threadRunningTime < 10 and model.getDistance(target) > 4:
+                threadRunningTime += 0.001
                 model.setPos(model, 0, 0.12, 0)
                 t.sleep(0.001)
             model.removeNode()
+            if hitObjectFull is not None:
+                if hitObjectFull["health"] == 0:
+                    hitObjectFull["health"] -= 1
+                    colNode.set_y(-10000)
+                    hitObjectFull["active"] = False
+                else:
+                    hitObjectFull["healthBar"]["value"] = hitObjectFull["health"]
+                    hitObjectFull["health"] -= 1
 
         Thread(target=_moveThread, name="Lsr-move", args=(model, self.ship)).start()
 
@@ -53,8 +63,12 @@ class lasers:
         origin=None,
         target=None,
         normal=(0, 0, 0),
+        hitObjectFull=None,
+        colNode=None,
     ):
         _firing.addLaser(
             self=self,
             data={"origin": origin, "target": target},
+            hitObjectFull=hitObjectFull,
+            colNode=colNode,
         )

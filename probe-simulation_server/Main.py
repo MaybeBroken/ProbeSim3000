@@ -134,6 +134,27 @@ class Main(ShowBase):
                     self.destroyButton.hide()
                 else:
                     self.destroyButton.show()
+                if self.lastDroneAmount != server.droneCount:
+                    for node in self.droneNodePath.getChildren():
+                        node.removeNode()
+                    for dronePos in server.nodePositions["drones"]:
+                        droneNode = NodePath("droneNode")
+                        droneMesh = self.cube.instanceTo(self.droneNodePath)
+                        droneMesh.reparentTo(droneNode)
+                        droneNode.setScale(0.5)
+                        droneNode.setColor(1, 0.3, 0.2, 1)
+                        droneNode.setPos(
+                            dronePos[0] / 100, dronePos[1] / 100, dronePos[2] / 100
+                        )
+                else:
+                    for dronePos, node in (
+                        server.nodePositions["drones"],
+                        self.droneNodePath.getChildren(),
+                    ):
+                        node.setPos(
+                            dronePos[0] / 100, dronePos[1] / 100, dronePos[2] / 100
+                        )
+                self.lastDroneAmount = server.droneCount
             else:
                 self.renderNode.hide()
                 self.renderNode.hide()
@@ -548,10 +569,17 @@ class Main(ShowBase):
         self.voyager.reparentTo(self.renderNode)
         self.voyager.setScale(2.8)
         self.voyager.setPos(-30, 15, 1)
-        self.ship = self.cube.instanceTo(self.renderNode)
+        cube = self.cube.instanceTo(self.renderNode)
+        self.ship = NodePath("ship")
+        self.ship.reparentTo(self.renderNode)
+        cube.reparentTo(self.ship)
         self.ship.setScale(0.2)
         self.ship.setColor(0.2, 0.3, 1, 1)
+
         self.lastDroneAmount = 0
+        self.droneNodePath = NodePath("droneNodePath")
+        self.droneNodePath.reparentTo(self.renderNode)
+
         self.CamPosNode = self.render.attachNewNode("CamPosNode")
         self.camera.reparentTo(self.CamPosNode)
         self.camera.setPos(0, -150, 0)

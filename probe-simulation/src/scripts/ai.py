@@ -84,15 +84,19 @@ def update(aiChars, ship, self):
             ai = char["ai"]
             node = char["mesh"]
             if char["active"]:
-                if ship.getDistance(node) > 400:
-                    behaviors(ai).PURSUE(ship)
-                else:
-                    behaviors(ai).REMOVE("pursue")
+                if ship.getDistance(node) > 8000:
+                    if ship.getDistance(node) > 800:
+                        behaviors(ai).PURSUE(ship)
+                    else:
+                        print(ship.getDistance(node))
+                        behaviors(ai).REMOVE("pursue")
                     node.lookAt((ship.get_x(), ship.get_y(), ship.get_z()))
                     node.setP(node.getP() + 180)
                     node.setR(node.getR() + 180)
                     if shipHealth["value"] > 0 and randint(0, 100) < 20:
                         fireLoop(ship=ship, char=char, self=self)
+                else:
+                    behaviors(ai).PURSUE(ship)
             else:
                 behaviors(ai).FLEE(ship, 10000, 10000, 1)
                 destroyChar(aiChars=aiChars, char=char, waitTime=0)

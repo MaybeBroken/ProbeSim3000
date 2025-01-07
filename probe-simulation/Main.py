@@ -182,7 +182,7 @@ class Main(ShowBase):
                 self=physics.physicsMgr,
                 drag=0.001,
                 gravity=(0, 0, 0),
-                rotational_drag=0.11,
+                rotational_drag=0.08,
             )
 
             t.sleep(2.1)
@@ -267,6 +267,8 @@ class Main(ShowBase):
                 self.startupMenuBackgroundImage.hide()
                 self.loadingText.hide()
                 self.droneCount.show()
+                self.setupControls()
+                self.hideCursor(True)
                 thread.Thread(target=self.update, name="update_task").start()
                 thread.Thread(
                     target=cli.runClient, args=[self, "client"], name="ClientThread"
@@ -286,8 +288,6 @@ class Main(ShowBase):
                     wantShaders=True,
                 )
                 self.taskMgr.add(self.update_shader_inputs, "update_shader_inputs_task")
-                self.setupControls()
-                self.hideCursor(True)
 
             self.accept("space", _start)
         except Exception as e:
@@ -360,14 +360,12 @@ class Main(ShowBase):
         cli.serveIp = f"ws://{cli.serveIPAddr}"
         try:
             asyncio.run(cli.testServerConnection())
-            print("Connected to server")
             self.notify_win("Connected to server")
             self.startupMenuStartButton["command"] = self.loadThread
             self.startupMenuStartButton["extraArgs"] = []
             self.startupMenuStartButton.setColor(1, 1, 1, 1)
             self.startupMenuStartButton["text"] = ""
         except:
-            print("Failed to connect to server")
             self.notify_win("Failed to connect to server")
 
     def startPlayer(self, media_file, name):
@@ -376,7 +374,7 @@ class Main(ShowBase):
         try:
             assert success, "Failed to load video!"
         except:
-            ...
+            self.notify_win(f"Failed to load video {media_file}")
         cm = CardMaker("fullscreenCard")
         cm.setFrameFullscreenQuad()
         cm.setUvRange(self.tex[name])
@@ -397,6 +395,7 @@ class Main(ShowBase):
     def update(self):
         while True:
             try:
+                self.AIworld.update()
                 md = self.win.getPointer(0)
                 mouseX = md.getX()
                 mouseY = md.getY()
@@ -436,7 +435,6 @@ class Main(ShowBase):
                         self.death.show()
                         self.check_resume()
                 else:
-                    self.AIworld.update()
                     self.currentDroneCount = len(
                         list(_ai for _ai in self.aiChars if _ai["active"])
                     )
@@ -447,38 +445,29 @@ class Main(ShowBase):
                     # update velocities
                     if self.update_time > 4:
                         self.update_time = 0
-                        try:
-                            self.velocity = physics.physicsMgr.getObjectVelocity(
-                                physics.physicsMgr, self.ship, "ship"
-                            )
-                            self.vel_text = (
-                                "Thrust: "
-                                + str(
-                                    round(
-                                        number=(
-                                            ((round(abs(self.velocity[0]) * 1000)) ^ 2)
-                                            + (
-                                                (round(abs(self.velocity[1]) * 1000))
-                                                ^ 2
-                                            )
-                                            + (
-                                                (round(abs(self.velocity[2]) * 1000))
-                                                ^ 2
-                                            )
-                                            / 1000
-                                        )
-                                        - 4,
-                                        ndigits=2,
+                        self.velocity = physics.physicsMgr.getObjectVelocity(
+                            physics.physicsMgr, self.ship, "ship"
+                        )
+                        self.vel_text = (
+                            "Thrust: "
+                            + str(
+                                round(
+                                    number=(
+                                        ((round(abs(self.velocity[0]) * 1000)) ^ 2)
+                                        + ((round(abs(self.velocity[1]) * 1000)) ^ 2)
+                                        + ((round(abs(self.velocity[2]) * 1000)) ^ 2)
+                                        / 1000
                                     )
+                                    - 4,
+                                    ndigits=2,
                                 )
-                                + " km/s"
                             )
-                            self.velocityMeter.configure(text=self.vel_text)
-                            self.posMeter.configure(
-                                text="pos XYZ: " + str(self.ship.getPos())
-                            )
-                        except:
-                            ...
+                            + " km/s"
+                        )
+                        self.velocityMeter.configure(text=self.vel_text)
+                        self.posMeter.configure(
+                            text="pos XYZ: " + str(self.ship.getPos())
+                        )
                     else:
                         self.update_time += 1
 
@@ -661,7 +650,9 @@ class Main(ShowBase):
                     self.updateOverlay()
             except Exception as e:
                 print(e)
-                t.sleep(0.5)
+                self.notify_win(
+                    "An error occurred, please check the console and tell the author"
+                )
             t.sleep(1 / 60)
 
     def check_resume(self):
@@ -781,22 +772,6 @@ class Main(ShowBase):
         self.velocityMeter.hide()
         self.posMeter.hide()
 
-    def toggleTargetingGui(self):
-        if Wvars.aiming == False:
-            Wvars.aiming = True
-            Wvars.cursorLock = False
-            self.hideCursor(True)
-            Wvars.movementEnabled = False
-            self.progress["value"] = 0
-            disp.GUI.show(disp.GUI)
-        elif Wvars.aiming == True:
-            Wvars.aiming = False
-            Wvars.cursorLock = True
-            self.hideCursor(True)
-            Wvars.movementEnabled = True
-            disp.GUI.hide(disp.GUI)
-            self.progress["value"] = 0
-
     def chargeLaser(self):
         self.laserPower = 0
 
@@ -915,7 +890,7 @@ class Main(ShowBase):
 
         targetNode = NodePath("targetingNode")
         targetNode.reparentTo(self.ship)
-        targetNode.set_y(45)
+        targetNode.set_y(4500)
 
         size = 3
 
@@ -976,10 +951,10 @@ class Main(ShowBase):
             self.loadingText.setText(f"Creating AI {num+1}/{Wvars.droneNum} ...")
             dNode = self.loader.loadModel("src/models/drone/drone.bam")
             dNode.instanceTo(self.droneMasterNode)
-            distance = randint(2000, 4000)
+            distance = randint(3000, 4500)
             spread = randint(-100, 100)
             angle = randint(
-                -45, 45
+                0, 90
             )  # Limit angle to be around the side closest to the ship
             x = self.voyager.getX() + (distance + spread) * sin(degToRad(angle))
             y = self.voyager.getY() + (distance + spread) * cos(degToRad(angle))
@@ -989,9 +964,9 @@ class Main(ShowBase):
             AIchar = AICharacter(
                 model_name="seeker",
                 model_np=dNode,
-                mass=100,
-                movt_force=80,
-                max_force=50,
+                mass=8,
+                movt_force=randint(10, 20) / 10,
+                max_force=randint(9, 13),
             )
             self.AIworld.addAiChar(AIchar)
 
@@ -1089,25 +1064,16 @@ class Main(ShowBase):
 
             rayHit = self.rayQueue.getEntry(0)
             hitNodePath = rayHit.getIntoNodePath()
-            normal = rayHit.getSurfaceNormal(hitNodePath)
 
-            if hitNodePath.getPythonTag("owner") in self.aiChars:
-                self.aiChars[hitNodePath.getPythonTag("owner")]["health"] -= 1
+            try:
                 hitObject = self.aiChars[hitNodePath.getPythonTag("owner")]["mesh"]
-                if self.aiChars[hitNodePath.getPythonTag("owner")]["health"] == 0:
-                    destroy = True
-                    colNode = hitNodePath.getPythonTag("collision")
-                    colNode.set_y(-10000)
-                    self.aiChars[hitNodePath.getPythonTag("owner")]["active"] = False
-                    ai.removeChar(
-                        self.aiChars[hitNodePath.getPythonTag("owner")], ship=self.ship
-                    )
-                else:
-                    self.aiChars[hitNodePath.getPythonTag("owner")]["healthBar"][
-                        "value"
-                    ] = self.aiChars[hitNodePath.getPythonTag("owner")]["health"]
-            else:
+                hitObjectFull = self.aiChars[hitNodePath.getPythonTag("owner")]
+                colNode = hitNodePath.getPythonTag("collision")
+            except Exception as e:
+                print(e)
                 hitObject = hitNodePath.getPythonTag("owner")
+                hitObjectFull = None
+                colNode = None
 
             if type(hitObject) == int:
                 return
@@ -1116,7 +1082,8 @@ class Main(ShowBase):
                     self=self,
                     origin=self.ship,
                     target=hitObject,
-                    normal=normal,
+                    hitObjectFull=hitObjectFull,
+                    colNode=colNode,
                 )
 
     def update_shader_inputs(self, task):
@@ -1127,6 +1094,8 @@ class Main(ShowBase):
         return task.cont
 
     def notify_win(self, message):
+        print(f":WIN_NOTIFY: {message}")
+
         def destroyThread(obj, wait=2, time=0.6):
             t.sleep(wait)
             if not self.objDestroyed:
@@ -1192,22 +1161,7 @@ def get_system_usage():
     except ImportError:
         pass
 
-    return cpu_usage, memory_usage, gpu_usage
-
-
-def print_system_usage():
-    while True:
-        try:
-            cpu_usage, memory_usage, gpu_usage = get_system_usage()
-            print(
-                f"CPU Usage: {int(cpu_usage)}%          \nMemory Usage: {int(memory_usage)}%          \nGPU Usage: {int(gpu_usage)}%          {UTILS.CLI.Control.up(3)}"
-            )
-            t.sleep(0.1)
-        except Exception as e:
-            print(e)
-
-
-thread.Thread(target=print_system_usage, name="system_usage_thread").start()
+    return int(cpu_usage), int(memory_usage), int(gpu_usage)
 
 
 Main().run()
