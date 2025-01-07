@@ -3,13 +3,17 @@ from random import *
 import time as t
 import sys
 import os
-from yaml import load, dump
-from yaml import CLoader as fLoader, CDumper as fDumper
-import cv2
-import numpy as np
-import codecs
-from screeninfo import get_monitors
-from direct.showbase.ShowBase import ShowBase
+
+try:
+    from screeninfo import get_monitors
+except ImportError:
+    os.system("python3 -m pip install screeninfo")
+    from screeninfo import get_monitors
+try:
+    from direct.showbase.ShowBase import ShowBase
+except ImportError:
+    os.system("python3 -m pip install panda3d")
+    from direct.showbase.ShowBase import ShowBase
 from panda3d.core import *
 from panda3d.core import (
     TransparencyAttrib,
@@ -27,16 +31,18 @@ from panda3d.core import (
     NodePath,
     LineSegs,
 )
-
-import direct.stdpy.threading as thread
-import direct.stdpy.file as panda_fMgr
-from direct.gui.DirectGui import *
-import direct.particles.Particles as part
-import src.scripts.server as server
-import src.scripts.vars as Wvars
-import src.scripts.display as disp
-import src.scripts.fileManager as fMgr
-import src.scripts.physics as physics
+try:
+    import direct.stdpy.threading as thread
+    from direct.gui.DirectGui import *
+    import src.scripts.server as server
+    import src.scripts.vars as Wvars
+    import src.scripts.physics as physics
+except ImportError as e:
+    print(e)
+    print(
+        "\nFailed to import required modules, your installation may be corrupt. \nContact the Developer for assistance at \033[92m@_maybebroken\033[0m on Discord or \033[96m@MaybeBroken\033[0m on Github\n"
+    )
+    exit(1)
 
 
 monitor = get_monitors()
