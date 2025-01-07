@@ -141,7 +141,7 @@ class Main(ShowBase):
                         droneNode = NodePath("droneNode")
                         droneMesh = self.cube.instanceTo(self.droneNodePath)
                         droneMesh.reparentTo(droneNode)
-                        droneNode.setScale(0.5)
+                        droneNode.setScale(2)
                         droneNode.setColor(1, 0.3, 0.2, 1)
                         droneNode.setPos(
                             dronePos[0] / 100, dronePos[1] / 100, dronePos[2] / 100
@@ -152,7 +152,7 @@ class Main(ShowBase):
                         self.droneNodePath.getChildren(),
                     ):
                         node.setPos(
-                            dronePos[0] / 100, dronePos[1] / 100, dronePos[2] / 100
+                            dronePos[0] / 1000, dronePos[1] / 1000, dronePos[2] / 1000
                         )
                 self.lastDroneAmount = server.droneCount
             else:

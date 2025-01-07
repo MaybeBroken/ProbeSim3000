@@ -3,7 +3,7 @@ from panda3d.core import NodePath
 from direct.stdpy.threading import Thread
 from src.scripts.weapons import lasers
 
-from time import monotonic, sleep
+from time import monotonic, sleep, time_ns, time
 from random import randint
 
 shipHealth = None
@@ -29,23 +29,13 @@ def behaviors(ai):
 
 def droneFire(target, origin, self):
     global shipHealth
-    newTarget = NodePath("newDroneTarget")
-    newTarget.setPos(target.getPos())
-    sleep(0.25)
-    if target.getDistance(newTarget) > 8:
-        totalTarget = newTarget
-    else:
-        totalTarget = target
-        try:
-            shipHealth["value"] -= 1
-        except:
-            ...
-    lasers.fire(self=self, origin=origin, target=totalTarget)
+    shipHealth["value"] -= 1
+    lasers.fire(self=self, origin=origin, target=target)
 
 
 def fireLoop(ship, char, self):
     node = char["mesh"]
-    if ship.getDistance(node) <= 50:
+    if ship.getDistance(node) <= 500:
         droneFire(ship, node, self=self)
 
 
@@ -79,25 +69,29 @@ def destroyChar(aiChars, char: dict, waitTime: float):
 
 
 def update(aiChars, ship, self):
-    while True:
-        for char in aiChars:
-            ai = char["ai"]
-            node = char["mesh"]
-            if char["active"]:
-                if ship.getDistance(node) > 8000:
-                    if ship.getDistance(node) > 800:
-                        behaviors(ai).PURSUE(ship)
-                    else:
-                        print(ship.getDistance(node))
-                        behaviors(ai).REMOVE("pursue")
-                    node.lookAt((ship.get_x(), ship.get_y(), ship.get_z()))
-                    node.setP(node.getP() + 180)
-                    node.setR(node.getR() + 180)
-                    if shipHealth["value"] > 0 and randint(0, 100) < 20:
-                        fireLoop(ship=ship, char=char, self=self)
-                else:
-                    behaviors(ai).PURSUE(ship)
+    if not hasattr(update, "index"):
+        update.index = 0
+    if update.index > 1000:
+        update.index = 0
+    if aiChars:
+        char = aiChars[update.index % len(aiChars)]
+        update.index += 1
+        ai = char["ai"]
+        node = char["mesh"]
+        if char["active"]:
+            if ship.getDistance(node) > 200:
+                behaviors(ai).PURSUE(ship)
             else:
-                behaviors(ai).FLEE(ship, 10000, 10000, 1)
-                destroyChar(aiChars=aiChars, char=char, waitTime=0)
-        sleep(0.08)
+                behaviors(ai).REMOVE("pursue")
+                node.lookAt((ship.get_x(), ship.get_y(), ship.get_z()))
+                node.setP(node.getP() + 180)
+                node.setR(node.getR() + 180)
+                if (
+                    shipHealth["value"] > 0
+                    and randint(0, 10) < 5
+                    and round(time(), 2) % 0.25 == 0
+                ):
+                    fireLoop(ship=ship, char=char, self=self)
+        else:
+            behaviors(ai).FLEE(ship, 10000, 10000, 1)
+            destroyChar(aiChars=aiChars, char=char, waitTime=0)

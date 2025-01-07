@@ -273,14 +273,6 @@ class Main(ShowBase):
                 thread.Thread(
                     target=cli.runClient, args=[self, "client"], name="ClientThread"
                 ).start()
-                thread.Thread(
-                    target=self.fixMotionTrailThread, name="fixMotionTrailThread"
-                ).start()
-                thread.Thread(
-                    target=ai.update,
-                    args=(self.aiChars, self.ship, self),
-                    name="AIUpdateThread",
-                ).start()
                 disp.ShaderCall.setupShaders(
                     self=disp.ShaderCall,
                     mainApp=self,
@@ -294,13 +286,6 @@ class Main(ShowBase):
             print(e)
             self.notify_win("Failed to load!\nreason: " + str(e))
             sys.exit(1)
-
-    def fixMotionTrailThread(self):
-        while True:
-            self.ship.setPos(
-                self.ship.getX(), self.ship.getY(), self.ship.getZ() + 0.0001
-            )
-            t.sleep(1 / 50)
 
     def postLoad(self):
         Wvars.shipHitPoints = Wvars.shipHealth
@@ -395,6 +380,10 @@ class Main(ShowBase):
     def update(self):
         while True:
             try:
+                self.ship.setPos(
+                    self.ship.getX(), self.ship.getY(), self.ship.getZ() + 0.0001
+                )
+                ai.update(self=self, aiChars=self.aiChars, ship=self.ship)
                 self.AIworld.update()
                 md = self.win.getPointer(0)
                 mouseX = md.getX()

@@ -70,23 +70,27 @@ class settingsScreen:
                 self.droneHealthSlider["value"] = 30
 
         def updateGuiValues():
-            self.shipHealthTitle["text"] = (
-                f"Ship Hit Points: {int(self.shipHealthSlider['value'])}"
-            )
-            self.shipHitRadiusTitle["text"] = (
-                f"Ship Hitbox Radius: {int(self.shipHitRadiusSlider['value'])}"
-            )
-            self.droneHitRadiusTitle["text"] = (
-                f"Drone Hitbox Radius: {int(self.droneHitRadiusSlider['value'])}"
-            )
-            self.droneHealthTitle["text"] = (
-                f"Drone Hit Points: {int(self.droneHealthSlider['value'])}"
-            )
-            Wvars.shipHealth = int(self.shipHealthSlider["value"])
-            Wvars.shipHitRadius = int(self.shipHitRadiusSlider["value"])
-            Wvars.droneHitRadius = int(self.droneHitRadiusSlider["value"])
-            Wvars.droneNum = int(self.droneNum.get())
-            Wvars.droneHealth = int(self.droneHealthSlider["value"])
+            try:
+                self.shipHealthTitle["text"] = (
+                    f"Ship Hit Points: {int(self.shipHealthSlider['value'])}"
+                )
+                self.shipHitRadiusTitle["text"] = (
+                    f"Ship Hitbox Radius: {int(self.shipHitRadiusSlider['value'])}"
+                )
+                self.droneHitRadiusTitle["text"] = (
+                    f"Drone Hitbox Radius: {int(self.droneHitRadiusSlider['value'])}"
+                )
+                self.droneHealthTitle["text"] = (
+                    f"Drone Hit Points: {int(self.droneHealthSlider['value'])}"
+                )
+                Wvars.shipHealth = int(self.shipHealthSlider["value"])
+                Wvars.shipHitRadius = int(self.shipHitRadiusSlider["value"])
+                Wvars.droneHitRadius = int(self.droneHitRadiusSlider["value"])
+                Wvars.droneNum = int(self.droneNum.get())
+                Wvars.droneHealth = int(self.droneHealthSlider["value"])
+            except Exception as e:
+                print(e)
+                self.notify_win(f"error updating gui values, check the console")
 
         global spriteSheet
         self.setBackgroundColor(0, 0, 0, 1)
