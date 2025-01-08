@@ -24,6 +24,7 @@ class main(ShowBase):
         self.accept("q", exit)
         self.accept("escape", exit)
         self.gui.setup()
+        self.droneCount.show()
 
 
 main().run()

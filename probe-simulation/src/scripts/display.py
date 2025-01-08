@@ -329,19 +329,29 @@ class GUI:
 
     def setup(self):
         t.sleep(0.1)
+        self.main.guiOverlay = OnscreenImage(
+            parent=self.guiFrame,
+            image="src/textures/raw/GUI_MAIN_1.png",
+            scale=(1, 1, 1),
+            pos=(0, 0, 0),
+        )
+        self.main.guiOverlay.setTransparency(self.TransparencyAttrib.MAlpha)
+        self.main.guiOverlay.setBin("background", 0)
+        self.main.guiOverlay.hide()
         self.main.HpIndicator = DirectWaitBar(
             parent=self.guiFrame,
-            value=0,
-            scale=(0.25, 1, 0.5),
-            pos=(0, 0, -0.9),
-            barColor=(1, 0, 0, 1),
+            value=60,
+            range=100,
+            scale=(0.525, 1, 0.33),
+            pos=(-0.015, 1, 0.9175),
+            barColor=(0, 0, 1, 1),
         )
         t.sleep(0.3)
         self.main.droneCount = OnscreenText(
-            text="Drones Remaining: ",
-            pos=(-0.8, 0.8),
+            text="Drones Remaining",
+            pos=(-0.875, 0.92),
             parent=self.guiFrame,
-            scale=(0.03 * (monitor[0].height / monitor[0].width), 0.03, 0.03),
+            scale=(0.02 * (monitor[0].height / monitor[0].width), 0.02, 0.02),
             font=self.main.loader.loadFont("src/fonts/sector_034.ttf"),
             align=TextNode.ALeft,
             fg=(1, 1, 1, 1),

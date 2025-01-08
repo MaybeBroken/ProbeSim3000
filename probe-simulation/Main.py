@@ -312,7 +312,9 @@ class Main(ShowBase):
         self.posMeter.hide()
         t.sleep(0.1)
         self.HpIndicator["range"] = Wvars.shipHealth
+        self.HpIndicator.setRange()
         self.HpIndicator["value"] = Wvars.shipHitPoints
+        self.HpIndicator.setValue()
         ai.setupShipHealth(self.HpIndicator)
         t.sleep(0.1)
 
@@ -664,7 +666,9 @@ class Main(ShowBase):
         self.death.hide()
         Wvars.shipHitPoints = Wvars.shipHealth
         self.HpIndicator["range"] = Wvars.shipHealth
+        self.HpIndicator.setRange()
         self.HpIndicator["value"] = Wvars.shipHitPoints
+        self.HpIndicator.setValue()
         self.reviveInput()
         physics.physicsMgr.registerObject(
             self=physics.physicsMgr,
