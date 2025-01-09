@@ -40,7 +40,7 @@ class settingsScreen:
             if arg == "Blank":
                 self.shipHealthSlider["value"] = 0
                 self.shipHitRadiusSlider["value"] = 0
-                self.droneHitRadiusSlider["value"] = 0
+                self.droneHitRadiusSlider["value"] = 25
                 self.droneNum.set("0")
                 self.droneHealthSlider["value"] = 1
 
@@ -53,19 +53,19 @@ class settingsScreen:
             elif arg == "Medium":
                 self.shipHealthSlider["value"] = 120
                 self.shipHitRadiusSlider["value"] = 5
-                self.droneHitRadiusSlider["value"] = 10
+                self.droneHitRadiusSlider["value"] = 20
                 self.droneNum.set("20")
                 self.droneHealthSlider["value"] = 12
             elif arg == "Difficult":
                 self.shipHealthSlider["value"] = 60
                 self.shipHitRadiusSlider["value"] = 8
-                self.droneHitRadiusSlider["value"] = 5
+                self.droneHitRadiusSlider["value"] = 18
                 self.droneNum.set("32")
                 self.droneHealthSlider["value"] = 20
             elif arg == "Hard":
                 self.shipHealthSlider["value"] = 40
                 self.shipHitRadiusSlider["value"] = 10
-                self.droneHitRadiusSlider["value"] = 3
+                self.droneHitRadiusSlider["value"] = 14
                 self.droneNum.set("45")
                 self.droneHealthSlider["value"] = 30
 
@@ -338,6 +338,13 @@ class GUI:
         self.main.guiOverlay.setTransparency(self.TransparencyAttrib.MAlpha)
         self.main.guiOverlay.setBin("background", 0)
         self.main.guiOverlay.hide()
+
+        self.main.HpIndicatorOutlineFrame = DirectFrame(
+            parent=self.guiFrame,
+            frameSize=(-0.55, 0.55, -0.05, 0.05),
+            frameColor=(0.1, 0.1, 0.1, 0.8),
+            pos=(-0.015, 1, 0.9175),
+        )
         self.main.HpIndicator = DirectWaitBar(
             parent=self.guiFrame,
             value=60,
@@ -346,10 +353,18 @@ class GUI:
             pos=(-0.015, 1, 0.9175),
             barColor=(0, 0, 1, 1),
         )
+        self.main.HpIndicatorOutlineFrame.setBin("background", 0)
         t.sleep(0.3)
+        self.main.droneCountFrame = DirectFrame(
+            parent=self.guiFrame,
+            frameSize=(-0.15, 0.15, -0.04, 0.04),
+            frameColor=(0.1, 0.1, 0.1, 0.8),
+            pos=(-0.75, 1, 0.9175),
+        )
+        self.main.droneCountFrame.setBin("background", 0)
         self.main.droneCount = OnscreenText(
-            text="Drones Remaining",
-            pos=(-0.875, 0.92),
+            text="Drones Remaining: -",
+            pos=(-0.875, 0.91),
             parent=self.guiFrame,
             scale=(0.02 * (monitor[0].height / monitor[0].width), 0.02, 0.02),
             font=self.main.loader.loadFont("src/fonts/sector_034.ttf"),

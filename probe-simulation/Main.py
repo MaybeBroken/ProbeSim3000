@@ -378,6 +378,7 @@ class Main(ShowBase):
 
     nodePositions = []
     doneDeath = False
+    lastExeption = None
 
     def update(self):
         while True:
@@ -392,7 +393,9 @@ class Main(ShowBase):
                 mouseY = md.getY()
                 dt = 1 / 60
                 self.nodePositions = {
-                    "drones": [tuple(ai["mesh"].getPos()) for ai in self.aiChars],
+                    "drones": [
+                        tuple(self.aiChars[ai]["mesh"].getPos()) for ai in self.aiChars
+                    ],
                     "ship": tuple(self.ship.getPos()),
                     "voyager": tuple(self.voyager.getPos()),
                 }
@@ -427,7 +430,7 @@ class Main(ShowBase):
                         self.check_resume()
                 else:
                     self.currentDroneCount = len(
-                        list(_ai for _ai in self.aiChars if _ai["active"])
+                        list(_ai for _ai in self.aiChars if self.aiChars[_ai]["active"])
                     )
                     self.droneCount.setText(
                         f"Drones Remaining: {self.currentDroneCount}"
@@ -640,10 +643,12 @@ class Main(ShowBase):
                 if self.ship.getDistance(self.voyager) > 4000:
                     self.updateOverlay()
             except Exception as e:
-                print(e)
-                self.notify_win(
-                    "An error occurred, please check the console and tell the author"
-                )
+                if self.lastExeption != str(e):
+                    print(str(e.__traceback__) + str(e))
+                    self.notify_win(
+                        "An error occurred, please check the console and tell the author"
+                    )
+                    self.lastExeption = str(e)
             t.sleep(1 / 60)
 
     def check_resume(self):
@@ -938,7 +943,7 @@ class Main(ShowBase):
 
     def setupAiWorld(self):
         self.AIworld = AIWorld(self.render)
-        self.aiChars = []
+        self.aiChars = {}
         t.sleep(0.3)
         for num in range(Wvars.droneNum):
             self.loadingText.setText(f"Creating AI {num+1}/{Wvars.droneNum} ...")
@@ -991,7 +996,7 @@ class Main(ShowBase):
                 "health": Wvars.droneHealth,
                 "healthBar": healthBar,
             }
-            self.aiChars.append(aiObject)
+            self.aiChars[num] = aiObject
             t.sleep(randint(40, 60) / 100)
 
     def setupScene(self):
@@ -1063,7 +1068,6 @@ class Main(ShowBase):
                 hitObjectFull = self.aiChars[hitNodePath.getPythonTag("owner")]
                 colNode = hitNodePath.getPythonTag("collision")
             except Exception as e:
-                print(e)
                 hitObject = hitNodePath.getPythonTag("owner")
                 hitObjectFull = None
                 colNode = None

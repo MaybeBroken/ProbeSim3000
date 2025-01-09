@@ -48,34 +48,29 @@ updateTime = 0
 
 def pauseAll(aiChars):
     for char in aiChars:
-        ai = char["ai"]
+        ai = aiChars[char["ai"]]
         behaviors(ai).REMOVE("pursue")
 
 
 def resumeAll(aiChars, target):
     for char in aiChars:
-        ai = char["ai"]
+        ai = aiChars[char["ai"]]
         behaviors(ai).PURSUE(target)
 
 
-def destroyChar(aiChars, char: dict, waitTime: float):
+def destroyChar(aiChars: dict, char: dict, waitTime: float, id: int):
     def _internal():
         sleep(waitTime)
         char["active"] = False
         char["mesh"].hide()
-        aiChars.remove(char)
+        del aiChars[id]
 
     return Thread(target=_internal, name="destroyChar").start()
 
 
 def update(aiChars, ship, self):
-    if not hasattr(update, "index"):
-        update.index = 0
-    if update.index > 1000:
-        update.index = 0
-    if aiChars:
-        char = aiChars[update.index % len(aiChars)]
-        update.index += 1
+    for _ai in aiChars:
+        char = aiChars[_ai]
         ai = char["ai"]
         node = char["mesh"]
         if char["active"]:
@@ -94,4 +89,4 @@ def update(aiChars, ship, self):
                     fireLoop(ship=ship, char=char, self=self)
         else:
             behaviors(ai).FLEE(ship, 10000, 10000, 1)
-            destroyChar(aiChars=aiChars, char=char, waitTime=0)
+            destroyChar(aiChars=aiChars, char=char, waitTime=0, id=_ai)

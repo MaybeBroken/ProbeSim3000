@@ -1,6 +1,7 @@
 from panda3d.core import Material, NodePath, Filename
 from direct.stdpy.threading import Thread
 import time as t
+from random import randint
 
 
 laserBeams = []
@@ -33,21 +34,22 @@ class _firing:
         obj.setColorScale((10, 0, 0, 1))  # Set color scale to enhance brightness
 
         def _moveThread(model, ship):
-            fireDistance = 150
+            t.sleep(randint(10, 30) / 100)
+            fireDistance = 180
             threadRunningTime = 0
-            while model.getDistance(ship) < fireDistance and threadRunningTime < 10 and model.getDistance(target) > 4:
-                threadRunningTime += 0.001
-                model.setPos(model, 0, 0.12, 0)
-                t.sleep(0.001)
-            model.removeNode()
             if hitObjectFull is not None:
                 if hitObjectFull["health"] == 0:
                     hitObjectFull["health"] -= 1
-                    colNode.set_y(-10000)
+                    colNode.setScale(0.001)
                     hitObjectFull["active"] = False
                 else:
                     hitObjectFull["healthBar"]["value"] = hitObjectFull["health"]
                     hitObjectFull["health"] -= 1
+            while threadRunningTime < 5:
+                threadRunningTime += 0.06
+                model.setPos(model, 0, 0.6, 0)
+                t.sleep(0.005)
+            model.removeNode()
 
         Thread(target=_moveThread, name="Lsr-move", args=(model, self.ship)).start()
 
