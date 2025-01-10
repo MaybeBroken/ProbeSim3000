@@ -17,15 +17,11 @@ except ImportError:
 from panda3d.core import *
 from panda3d.core import (
     TransparencyAttrib,
-    Texture,
     DirectionalLight,
     AmbientLight,
     loadPrcFile,
     ConfigVariableString,
-    AudioSound,
-    PNMImage,
     Vec3,
-    StringStream,
     MovieTexture,
     CardMaker,
     NodePath,
@@ -142,27 +138,27 @@ class Main(ShowBase):
                     self.destroyButton.hide()
                 else:
                     self.destroyButton.show()
-                if self.lastDroneAmount != server.droneCount:
-                    for node in self.droneNodePath.getChildren():
-                        node.removeNode()
-                    for dronePos in server.nodePositions["drones"]:
-                        droneNode = NodePath("droneNode")
-                        droneMesh = self.cube.instanceTo(self.droneNodePath)
-                        droneMesh.reparentTo(droneNode)
-                        droneNode.setScale(2)
-                        droneNode.setColor(1, 0.3, 0.2, 1)
-                        droneNode.setPos(
-                            dronePos[0] / 100, dronePos[1] / 100, dronePos[2] / 100
-                        )
-                else:
-                    for dronePos, node in (
-                        server.nodePositions["drones"],
-                        self.droneNodePath.getChildren(),
-                    ):
-                        node.setPos(
-                            dronePos[0] / 1000, dronePos[1] / 1000, dronePos[2] / 1000
-                        )
-                self.lastDroneAmount = server.droneCount
+                # if self.lastDroneAmount != server.droneCount:
+                #     for node in self.droneNodePath.getChildren():
+                #         node.removeNode()
+                #     for dronePos in server.nodePositions["drones"]:
+                #         droneNode = NodePath("droneNode")
+                #         droneMesh = self.cube.instanceTo(self.droneNodePath)
+                #         droneMesh.reparentTo(droneNode)
+                #         droneNode.setScale(2)
+                #         droneNode.setColor(1, 0.3, 0.2, 1)
+                #         droneNode.setPos(
+                #             dronePos[0] / 100, dronePos[1] / 100, dronePos[2] / 100
+                #         )
+                # else:
+                #     for dronePos, node in (
+                #         server.nodePositions["drones"],
+                #         self.droneNodePath.getChildren(),
+                #     ):
+                #         node.setPos(
+                #             dronePos[0] / 1000, dronePos[1] / 1000, dronePos[2] / 1000
+                #         )
+                # self.lastDroneAmount = server.droneCount
             else:
                 self.renderNode.hide()
                 self.renderNode.hide()

@@ -50,7 +50,6 @@ from panda3d.core import (
     OrthographicLens,
     CollisionTraverser,
     CollisionNode,
-    CollisionBox,
     CollisionSphere,
     CollisionRay,
     CollisionHandlerQueue,
@@ -58,13 +57,6 @@ from panda3d.core import (
     CollisionHandlerPusher,
     MovieTexture,
     CardMaker,
-    BitMask32,
-    Shader,
-    Point2,
-    Point3,
-    StringStream,
-    PNMImage,
-    ColorBlendAttrib,
 )
 from direct.gui.DirectGui import *
 import direct.stdpy.threading as thread
