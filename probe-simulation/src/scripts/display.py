@@ -35,36 +35,36 @@ class settingsScreen:
     def start(self):
         def updateDifficulty(arg):
             if arg == "Blank":
-                self.shipHealthSlider["value"] = 0
+                self.shipHealthSlider["value"] = 200
                 self.shipHitRadiusSlider["value"] = 0
                 self.droneHitRadiusSlider["value"] = 25
                 self.droneNum.set("0")
                 self.droneHealthSlider["value"] = 1
 
             elif arg == "Easy":
-                self.shipHealthSlider["value"] = 200
+                self.shipHealthSlider["value"] = 500
                 self.shipHitRadiusSlider["value"] = 3
                 self.droneHitRadiusSlider["value"] = 25
                 self.droneNum.set("10")
-                self.droneHealthSlider["value"] = 5
+                self.droneHealthSlider["value"] = 2
             elif arg == "Medium":
-                self.shipHealthSlider["value"] = 120
+                self.shipHealthSlider["value"] = 450
                 self.shipHitRadiusSlider["value"] = 5
                 self.droneHitRadiusSlider["value"] = 20
                 self.droneNum.set("20")
-                self.droneHealthSlider["value"] = 12
+                self.droneHealthSlider["value"] = 3
             elif arg == "Difficult":
-                self.shipHealthSlider["value"] = 60
+                self.shipHealthSlider["value"] = 400
                 self.shipHitRadiusSlider["value"] = 8
                 self.droneHitRadiusSlider["value"] = 18
                 self.droneNum.set("32")
-                self.droneHealthSlider["value"] = 20
+                self.droneHealthSlider["value"] = 5
             elif arg == "Hard":
-                self.shipHealthSlider["value"] = 40
+                self.shipHealthSlider["value"] = 350
                 self.shipHitRadiusSlider["value"] = 10
                 self.droneHitRadiusSlider["value"] = 14
                 self.droneNum.set("45")
-                self.droneHealthSlider["value"] = 30
+                self.droneHealthSlider["value"] = 7
 
         def updateGuiValues():
             try:
@@ -212,7 +212,7 @@ class settingsScreen:
         )
         self.shipHealthSlider = DirectSlider(
             parent=self.settingsFrame,
-            range=(40, 200),
+            range=(200, 500),
             pageSize=1,
             scale=0.2,
             thumb_frameSize=(-0.05, 0.05, -0.08, 0.08),
@@ -303,7 +303,7 @@ class settingsScreen:
             command=updateGuiValues,
         )
         self.serverIpTitle = OnscreenText(
-            text=f"Server IP",
+            text=f"Server IP", 
             parent=self.settingsFrame,
             scale=0.03,
             pos=(0.25, -0.45),
@@ -343,11 +343,20 @@ class GUI:
         )
         self.main.HpIndicator = DirectWaitBar(
             parent=self.guiFrame,
-            value=60,
-            range=100,
+            value=0,
+            range=500,
             scale=(0.525, 1, 0.33),
             pos=(-0.015, 1, 0.9175),
             barColor=(0, 0, 1, 1),
+        )
+        self.main.HpText = OnscreenText(
+            text="Ship Health: -",
+            pos=(-0.3, 0.91),
+            parent=self.guiFrame,
+            scale=(0.02 * (monitor[0].height / monitor[0].width), 0.02, 0.02),
+            font=self.main.loader.loadFont("src/fonts/sector_034.ttf"),
+            align=TextNode.ALeft,
+            fg=(1, 1, 1, 1),
         )
         self.main.HpIndicatorOutlineFrame.setBin("background", 0)
         t.sleep(0.3)

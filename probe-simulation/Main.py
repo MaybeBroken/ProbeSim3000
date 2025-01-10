@@ -292,7 +292,7 @@ class Main(ShowBase):
         self.velocityMeter.hide()
         self.posMeter.hide()
         t.sleep(0.1)
-        self.HpIndicator["range"] = Wvars.shipHealth
+        self.HpIndicator["range"] = Wvars.shipHealth + 1
         self.HpIndicator.setRange()
         self.HpIndicator["value"] = Wvars.shipHitPoints
         self.HpIndicator.setValue()
@@ -355,19 +355,21 @@ class Main(ShowBase):
         thread.Thread(target=_inThread, name="ip_config_thread").start()
 
     def startPlayer(self, media_file, name):
-        self.tex[name] = MovieTexture("name")
-        success = self.tex[name].read(media_file)
-        try:
-            assert success, "Failed to load video!"
-        except:
-            self.notify_win(f"Failed to load video {media_file}")
-        cm = CardMaker("fullscreenCard")
-        cm.setFrameFullscreenQuad()
-        cm.setUvRange(self.tex[name])
-        card = NodePath(cm.generate())
-        card.reparentTo(self.render2d)
-        card.setTexture(self.tex[name])
-        return card
+        while True:
+            self.tex[name] = MovieTexture("name")
+            if self.tex[name].read(media_file):
+                cm = CardMaker("fullscreenCard")
+                cm.setFrameFullscreenQuad()
+                cm.setUvRange(self.tex[name])
+                card = NodePath(cm.generate())
+                card.reparentTo(self.render2d)
+                card.setTexture(self.tex[name])
+                return card
+            else:
+                self.tex[name].destroy()
+                del self.tex[name]
+                print("failed to load texture, retrying...")
+                continue
 
     def stopTex(self, name):
         self.tex[name].stop()
@@ -401,7 +403,7 @@ class Main(ShowBase):
 
                 playerMoveSpeed = Wvars.speed / 100
                 if (
-                    self.ship.getDistance(self.voyager) > 9000
+                    self.ship.getDistance(self.voyager) > 7000
                     or self.HpIndicator["value"] <= 0
                     or cli.serverDeath
                 ):
@@ -425,7 +427,13 @@ class Main(ShowBase):
                             frameSize=(-1, 1, -1, 1),
                             frameColor=(0, 0, 0, 1),
                         )
+                        self.pauseFrame.setBin("background", 0)
                         self.death.show()
+                        self.death.setBin("fixed", 0)
+                        self.notify_win(
+                            "Drone Connection Lost! Please Launch a new Probe!"
+                        )
+                        self.hideCursor(False)
                         self.check_resume()
                 else:
                     self.currentDroneCount = len(
@@ -434,6 +442,11 @@ class Main(ShowBase):
                     self.droneCount.setText(
                         f"Drones Remaining: {self.currentDroneCount}"
                     )
+                    self.HpIndicator.setRange()
+                    self.HpIndicator.setValue()
+                    self.HpText.configure(
+                        text="Ship Health: " + str(self.HpIndicator["value"])
+                    )
 
                     # update velocities
                     if self.update_time > 4:
@@ -441,26 +454,35 @@ class Main(ShowBase):
                         self.velocity = physics.physicsMgr.getObjectVelocity(
                             physics.physicsMgr, self.ship, "ship"
                         )
-                        self.vel_text = (
-                            "Thrust: "
-                            + str(
-                                round(
-                                    number=(
-                                        ((round(abs(self.velocity[0]) * 1000)) ^ 2)
-                                        + ((round(abs(self.velocity[1]) * 1000)) ^ 2)
-                                        + ((round(abs(self.velocity[2]) * 1000)) ^ 2)
-                                        / 1000
+                        try:
+                            self.vel_text = (
+                                "Thrust: "
+                                + str(
+                                    round(
+                                        number=(
+                                            ((round(abs(self.velocity[0]) * 1000)) ^ 2)
+                                            + (
+                                                (round(abs(self.velocity[1]) * 1000))
+                                                ^ 2
+                                            )
+                                            + (
+                                                (round(abs(self.velocity[2]) * 1000))
+                                                ^ 2
+                                            )
+                                            / 1000
+                                        )
+                                        - 4,
+                                        ndigits=2,
                                     )
-                                    - 4,
-                                    ndigits=2,
                                 )
+                                + " km/s"
                             )
-                            + " km/s"
-                        )
-                        self.velocityMeter.configure(text=self.vel_text)
-                        self.posMeter.configure(
-                            text="pos XYZ: " + str(self.ship.getPos())
-                        )
+                            self.velocityMeter.configure(text=self.vel_text)
+                            self.posMeter.configure(
+                                text="pos XYZ: " + str(self.ship.getPos())
+                            )
+                        except:
+                            raise Exception("Failed to get velocity")
                     else:
                         self.update_time += 1
 
@@ -643,10 +665,7 @@ class Main(ShowBase):
                     self.updateOverlay()
             except Exception as e:
                 if self.lastExeption != str(e):
-                    print(str(e.__traceback__) + str(e))
-                    self.notify_win(
-                        "An error occurred, please check the console and tell the author"
-                    )
+                    print(e)
                     self.lastExeption = str(e)
             t.sleep(1 / 60)
 
@@ -667,6 +686,7 @@ class Main(ShowBase):
 
     def resume(self):
         self.pauseFrame.destroy()
+        self.hideCursor(True)
         self.death.hide()
         Wvars.shipHitPoints = Wvars.shipHealth
         self.HpIndicator["range"] = Wvars.shipHealth
@@ -680,6 +700,8 @@ class Main(ShowBase):
             name="ship",
             velocity=[0, 0, 0],
             rotational_velocity=[0.1, 0, 0],
+            rotationLimit=[3.5, 3.5, 4],
+            velocityLimit=[2, 2, 2],
         )
         physics.physicsMgr.registerObject(
             self=physics.physicsMgr,
@@ -687,7 +709,15 @@ class Main(ShowBase):
             name="camNodePath",
             velocity=[0, 0, 0],
             rotational_velocity=[0, 0, 0],
+            rotationLimit=[4, 4, 4],
         )
+        self.ship.setPos(
+            randint(-1000, 1000), randint(-1000, 1000), randint(-1000, 1000)
+        )
+        while self.ship.getDistance(self.voyager) < 800:
+            self.ship.setPos(
+                randint(-1000, 1000), randint(-1000, 1000), randint(-1000, 1000)
+            )
         ai.resumeAll(self.aiChars, self.ship)
         self.doneDeath = False
 
