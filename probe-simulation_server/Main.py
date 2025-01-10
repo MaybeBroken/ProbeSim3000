@@ -4,16 +4,8 @@ import time as t
 import sys
 import os
 
-try:
-    from screeninfo import get_monitors
-except ImportError:
-    os.system("python3 -m pip install screeninfo")
-    from screeninfo import get_monitors
-try:
-    from direct.showbase.ShowBase import ShowBase
-except ImportError:
-    os.system("python3 -m pip install panda3d")
-    from direct.showbase.ShowBase import ShowBase
+from screeninfo import get_monitors
+from direct.showbase.ShowBase import ShowBase
 from panda3d.core import *
 from panda3d.core import (
     TransparencyAttrib,
@@ -34,8 +26,7 @@ try:
     import src.scripts.server as server
     import src.scripts.vars as Wvars
     import src.scripts.physics as physics
-except ImportError as e:
-    print(e)
+except:
     print(
         "\nFailed to import required modules, your installation may be corrupt. \nContact the Developer for assistance at \033[92m@_maybebroken\033[0m on Discord or \033[96m@MaybeBroken\033[0m on Github\n"
     )

@@ -12,3 +12,4 @@ installer_data/ProbeSim3000-Installer.exe
 *.pyc
 __pycache__/*
 probe-simulation/python
+probe-simulation_server/python

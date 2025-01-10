@@ -2,16 +2,9 @@ from os import system as _system
 import time as t
 import asyncio
 import socket
+import websockets
+import json as js
 
-try:
-    import websockets
-except:
-    _system(f"python3 -m pip install websockets")
-
-try:
-    import json as js
-except:
-    _system(f"python3 -m pip install json")
 
 cliDead = False
 cliRespawn = False

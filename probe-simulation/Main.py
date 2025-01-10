@@ -1,5 +1,5 @@
 import os
-from math import pi, sin, cos, sqrt, tan
+from math import pi, sin, cos
 from random import randint
 import time as t
 import sys
@@ -14,11 +14,6 @@ try:
 except ImportError:
     os.system("python3 -m pip install gputil")
     import GPUtil
-try:
-    import websockets as ws
-except ImportError:
-    os.system("python3 -m pip install websockets")
-    import websockets as ws
 try:
     import asyncio
 except ImportError:
