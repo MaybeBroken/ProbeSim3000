@@ -2,7 +2,6 @@ from os import system as _system
 import time as t
 import asyncio
 import socket
-from direct.stdpy.threading import Thread
 
 try:
     import websockets

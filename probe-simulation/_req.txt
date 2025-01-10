@@ -1,0 +1,8 @@
+panda3d
+websockets
+psutil
+GPUtil
+asyncio
+screeninfo
+socket
+json

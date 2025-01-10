@@ -14,7 +14,6 @@ try:
 except ImportError:
     os.system("python3 -m pip install gputil")
     import GPUtil
-
 try:
     import websockets as ws
 except ImportError:
@@ -58,6 +57,11 @@ from panda3d.core import (
     MovieTexture,
     CardMaker,
 )
+from direct.interval.LerpInterval import (
+    LerpPosInterval,
+    LerpHprInterval,
+    LerpColorInterval,
+)
 from direct.gui.DirectGui import *
 import direct.stdpy.threading as thread
 from direct.motiontrail.MotionTrail import MotionTrail
@@ -69,8 +73,6 @@ try:
     import src.scripts.client as cli
     import src.scripts.weapons as weapons
     import src.scripts.ai as ai
-    import src.scripts.guiUtils as guiUtils
-    import src.scripts.UTILS as UTILS
 except ImportError as e:
     print(e)
     print(
@@ -327,17 +329,35 @@ class Main(ShowBase):
         thread.Thread(target=self.load, name="load_task").start()
 
     def configIp(self):
-        cli.serveIPAddr = self.ipEntry.get()
-        cli.serveIp = f"ws://{cli.serveIPAddr}"
-        try:
-            asyncio.run(cli.testServerConnection())
-            self.notify_win("Connected to server")
-            self.startupMenuStartButton["command"] = self.loadThread
-            self.startupMenuStartButton["extraArgs"] = []
-            self.startupMenuStartButton.setColor(1, 1, 1, 1)
-            self.startupMenuStartButton["text"] = ""
-        except:
-            self.notify_win("Failed to connect to server")
+        self.ipEntry["focus"] = False
+        self.ipEntry["frameColor"] = (0.3, 0.3, 0.3, 1)
+        self.ipEntry.setFrameColor()
+
+        def _inThread():
+            cli.serveIPAddr = self.ipEntry.get()
+            cli.serveIp = f"ws://{cli.serveIPAddr}"
+            try:
+                asyncio.run(cli.testServerConnection())
+                self.notify_win("Connected to server")
+                self.startupMenuStartButton["command"] = self.loadThread
+                self.startupMenuStartButton["extraArgs"] = []
+                self.startupMenuStartButton.setColor(1, 1, 1, 1)
+                self.startupMenuStartButton["text"] = ""
+                LerpColorInterval(
+                    self.ipEntry, 1, (0.2, 0.8, 0.3, 1), (0.2, 0.2, 0.2, 1)
+                ),
+            except:
+                self.notify_win("Failed to connect to server")
+                LerpColorInterval(
+                    self.ipEntry,
+                    1,
+                    (1, 1, 1, 1),
+                    (0.8, 0.3, 0.3, 1),
+                ).start()
+                self.ipEntry["state"] = DGG.NORMAL
+                self.ipEntry["focus"] = True
+
+        thread.Thread(target=_inThread, name="ip_config_thread").start()
 
     def startPlayer(self, media_file, name):
         self.tex[name] = MovieTexture("name")

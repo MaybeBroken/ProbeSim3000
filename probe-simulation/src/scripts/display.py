@@ -1,9 +1,7 @@
 from direct.filter.CommonFilters import CommonFilters
 from direct.gui.DirectGui import *
-from src.scripts.guiUtils import fade
 import src.scripts.vars as Wvars
-from direct.directtools.DirectGrid import DirectGrid
-from panda3d.core import deg2Rad, TextNode
+from panda3d.core import TextNode
 import sys
 import time as t
 

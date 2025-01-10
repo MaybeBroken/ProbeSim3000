@@ -10,3 +10,5 @@ probe-simulation/src/models/skybox/box.blend1
 installer_data/ProbeSim3000-Server-Installer.exe
 installer_data/ProbeSim3000-Installer.exe
 *.pyc
+__pycache__/*
+probe-simulation/python
