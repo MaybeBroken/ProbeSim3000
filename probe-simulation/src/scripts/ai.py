@@ -1,9 +1,7 @@
 from panda3d.ai import *
-from panda3d.core import NodePath
 from direct.stdpy.threading import Thread
 from src.scripts.weapons import lasers
-
-from time import monotonic, sleep, time_ns, time
+from time import sleep, time
 from random import randint
 
 shipHealth = None

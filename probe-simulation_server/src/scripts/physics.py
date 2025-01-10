@@ -1,6 +1,3 @@
-import direct.stdpy.threading as thread
-
-
 class physicsMgr:
     def enable(
         self,

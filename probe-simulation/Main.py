@@ -15,7 +15,6 @@ except ImportError:
     os.system("python3 -m pip install gputil")
     import GPUtil
 
-
 try:
     import websockets as ws
 except ImportError:
@@ -36,11 +35,6 @@ try:
 except ImportError:
     os.system("python3 -m pip install panda3d")
     from direct.showbase.ShowBase import ShowBase
-try:
-    import simplepbr as pbr
-except ImportError:
-    os.system("python3 -m pip install panda3d-simplepbr")
-    import simplepbr as pbr
 from panda3d.ai import *
 from panda3d.ai import AIWorld, AICharacter
 from panda3d.core import *
@@ -72,16 +66,14 @@ from panda3d.core import (
     PNMImage,
     ColorBlendAttrib,
 )
-from direct.gui.OnscreenImage import OnscreenImage
-import direct.stdpy.threading as thread
 from direct.gui.DirectGui import *
+import direct.stdpy.threading as thread
 from direct.motiontrail.MotionTrail import MotionTrail
 
 try:
     import src.scripts.vars as Wvars
     import src.scripts.physics as physics
     import src.scripts.display as disp
-    import src.scripts.fileManager as fMgr
     import src.scripts.client as cli
     import src.scripts.weapons as weapons
     import src.scripts.ai as ai

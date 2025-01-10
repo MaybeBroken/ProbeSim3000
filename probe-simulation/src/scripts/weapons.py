@@ -1,6 +1,5 @@
-from panda3d.core import Material, NodePath, Filename
+from panda3d.core import Material, NodePath
 from direct.stdpy.threading import Thread
-from panda3d.core import Vec3
 import time as t
 from random import randint
 

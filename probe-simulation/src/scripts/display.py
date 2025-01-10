@@ -4,7 +4,6 @@ from src.scripts.guiUtils import fade
 import src.scripts.vars as Wvars
 from direct.directtools.DirectGrid import DirectGrid
 from panda3d.core import deg2Rad, TextNode
-import simplepbr as pbr
 import sys
 import time as t
 

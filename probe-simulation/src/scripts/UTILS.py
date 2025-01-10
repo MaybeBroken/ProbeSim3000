@@ -2,7 +2,6 @@ from math import pi
 import os
 import random
 import string
-from time import sleep
 
 
 def getDistance(pointA, pointB):

@@ -1,6 +1,5 @@
 import asyncio
 import websockets
-import time as t
 import socket
 from os import system
 
