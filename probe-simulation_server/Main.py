@@ -31,6 +31,7 @@ from panda3d.core import (
     NodePath,
     LineSegs,
 )
+
 try:
     import direct.stdpy.threading as thread
     from direct.gui.DirectGui import *
@@ -97,6 +98,7 @@ class Main(ShowBase):
         # ...
 
         self.setupControls()
+        self.setupLights()
         self.loadInitialTextures()
         Wvars.cursorLock = False
 
@@ -262,6 +264,16 @@ class Main(ShowBase):
             },
         ).start()
 
+    def setupLights(self):
+        ambientLight = AmbientLight("ambientLight")
+        ambientLight.setColor((0.5, 0.5, 0.5, 1))
+        self.render.setLight(self.render.attachNewNode(ambientLight))
+
+        directionalLight = DirectionalLight("directionalLight")
+        directionalLight.setDirection(Vec3(0.3, 0.5, -0.7))
+        directionalLight.setColor((1, 1, 1, 1))
+        self.render.setLight(self.render.attachNewNode(directionalLight))
+
     def startGui(self):
         self.guiFrame = DirectFrame(parent=self.aspect2d)
         self.setupIntroMenu()
@@ -356,10 +368,10 @@ class Main(ShowBase):
         )
 
         self.startupMenuCreditsText = OnscreenText(
-            "Programmed by David Sponseller\nVersion 1.2",
-            pos=(-0.8 * monitor[0].width / monitor[0].height, -0.95),
-            scale=0.04,
             parent=self.startupMenuFrame,
+            text="Programmed by David Sponseller\nVersion 1.4",
+            pos=(-0.7 * monitor[0].width / monitor[0].height, -0.9),
+            scale=0.0475,
             fg=(0.5, 7, 7, 0.75),
         )
 
@@ -513,10 +525,10 @@ class Main(ShowBase):
         )
         self.destroyButton.hide()
         self.CreditsText = OnscreenText(
-            "Programmed by David Sponseller\nVersion 1.2",
-            pos=(-0.8 * monitor[0].width / monitor[0].height, -0.95),
-            scale=0.04,
             parent=self.guiFrame,
+            text="Programmed by David Sponseller\nVersion 1.4",
+            pos=(-0.7 * monitor[0].width / monitor[0].height, -0.9),
+            scale=0.0475,
             fg=(0.5, 7, 7, 0.75),
         )
         self.IpAddrText = OnscreenText(

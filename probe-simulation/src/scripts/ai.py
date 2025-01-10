@@ -35,8 +35,7 @@ def droneFire(target, origin, self):
 
 def fireLoop(ship, char, self):
     node = char["mesh"]
-    if ship.getDistance(node) <= 500:
-        droneFire(ship, node, self=self)
+    droneFire(ship, node, self=self)
 
 
 def removeChar(ai, ship):
@@ -78,15 +77,16 @@ def update(aiChars, ship, self):
                 behaviors(ai).PURSUE(ship)
             else:
                 behaviors(ai).REMOVE("pursue")
-                node.lookAt((ship.get_x(), ship.get_y(), ship.get_z()))
-                node.setP(node.getP() + 180)
-                node.setR(node.getR() + 180)
-                if (
-                    shipHealth["value"] > 0
-                    and randint(0, 10) < 5
-                    and round(time(), 2) % 0.25 == 0
-                ):
-                    fireLoop(ship=ship, char=char, self=self)
+            node.lookAt((ship.get_x(), ship.get_y(), ship.get_z()))
+            node.setP(node.getP() + 180)
+            node.setR(node.getR() + 180)
+            if (
+                shipHealth["value"] > 0
+                and randint(0, 10) < 5
+                and round(time(), 2) % 0.25 == 0
+                and ship.getDistance(node) < 350
+            ):
+                fireLoop(ship=ship, char=char, self=self)
         else:
             behaviors(ai).FLEE(ship, 10000, 10000, 1)
             destroyChar(aiChars=aiChars, char=char, waitTime=0, id=_ai)

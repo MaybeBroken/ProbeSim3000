@@ -703,6 +703,7 @@ class Main(ShowBase):
         self.x_movement = 0
         self.y_movement = 0
         self.z_movement = 0
+        self.lastShot = 0
         self.keyMap = {
             "forward": False,
             "backward": False,
@@ -1055,33 +1056,34 @@ class Main(ShowBase):
         self.enableParticles()
 
     def MouseClicked(self):
-        # self.ray.setFromLens(self.camNode, mpos.getX(), mpos.getY())
-        self.cTrav.traverse(self.render)
-        if self.rayQueue.getNumEntries() > 0:
-            self.rayQueue.sortEntries()
+        if t.time() - self.lastShot > 0.25:
+            self.lastShot = t.time()
+            self.cTrav.traverse(self.render)
+            if self.rayQueue.getNumEntries() > 0:
+                self.rayQueue.sortEntries()
 
-            rayHit = self.rayQueue.getEntry(0)
-            hitNodePath = rayHit.getIntoNodePath()
+                rayHit = self.rayQueue.getEntry(0)
+                hitNodePath = rayHit.getIntoNodePath()
 
-            try:
-                hitObject = self.aiChars[hitNodePath.getPythonTag("owner")]["mesh"]
-                hitObjectFull = self.aiChars[hitNodePath.getPythonTag("owner")]
-                colNode = hitNodePath.getPythonTag("collision")
-            except Exception as e:
-                hitObject = hitNodePath.getPythonTag("owner")
-                hitObjectFull = None
-                colNode = None
+                try:
+                    hitObject = self.aiChars[hitNodePath.getPythonTag("owner")]["mesh"]
+                    hitObjectFull = self.aiChars[hitNodePath.getPythonTag("owner")]
+                    colNode = hitNodePath.getPythonTag("collision")
+                except Exception as e:
+                    hitObject = hitNodePath.getPythonTag("owner")
+                    hitObjectFull = None
+                    colNode = None
 
-            if type(hitObject) == int:
-                return
-            else:
-                weapons.lasers.fire(
-                    self=self,
-                    origin=self.ship,
-                    target=hitObject,
-                    hitObjectFull=hitObjectFull,
-                    colNode=colNode,
-                )
+                if type(hitObject) == int:
+                    return
+                else:
+                    weapons.lasers.fire(
+                        self=self,
+                        origin=self.ship,
+                        target=hitObject,
+                        hitObjectFull=hitObjectFull,
+                        colNode=colNode,
+                    )
 
     def update_shader_inputs(self, task):
         # self.shaderCard.set_shader_input(

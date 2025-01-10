@@ -1,5 +1,6 @@
 from panda3d.core import Material, NodePath, Filename
 from direct.stdpy.threading import Thread
+from panda3d.core import Vec3
 import time as t
 from random import randint
 
@@ -33,10 +34,15 @@ class _firing:
         obj.setMaterial(material)
         obj.setColorScale((10, 0, 0, 1))  # Set color scale to enhance brightness
 
-        def _moveThread(model, ship):
-            t.sleep(randint(10, 30) / 100)
+        def _moveThread(model, ship, targetPos):
             fireDistance = 180
+            targetNode = NodePath("LSR_targetNode")
+            targetNode.setPos(targetPos)
             threadRunningTime = 0
+            while threadRunningTime < 5 and model.getDistance(targetNode) > 4:
+                threadRunningTime += 0.06
+                model.setPos(model, 0, 0.6, 0)
+                t.sleep(0.003)
             if hitObjectFull is not None:
                 if hitObjectFull["health"] == 0:
                     hitObjectFull["health"] -= 1
@@ -45,13 +51,13 @@ class _firing:
                 else:
                     hitObjectFull["healthBar"]["value"] = hitObjectFull["health"]
                     hitObjectFull["health"] -= 1
-            while threadRunningTime < 5:
-                threadRunningTime += 0.06
-                model.setPos(model, 0, 0.6, 0)
-                t.sleep(0.005)
             model.removeNode()
 
-        Thread(target=_moveThread, name="Lsr-move", args=(model, self.ship)).start()
+        Thread(
+            target=_moveThread,
+            name="Lsr-move",
+            args=(model, self.ship, target.getPos()),
+        ).start()
 
 
 class lasers:
