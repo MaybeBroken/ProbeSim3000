@@ -295,7 +295,7 @@ class Main(ShowBase):
 
     def spinImageTask(self, task):
         self.startupMenuBackgroundImage2.setH(
-            self.startupMenuBackgroundImage2.getH() + 1
+            self.startupMenuBackgroundImage2.getH() + 0.5
         )
         return task.cont
 

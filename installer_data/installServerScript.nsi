@@ -5,7 +5,7 @@
 OutFile "ProbeSim3000-Server-Installer.exe"
 Name "ProbeSim3000-Server"
 InstallDir $PROFILE\ProbeSim3000-Server
-RequestExecutionLevel user
+RequestExecutionLevel admin
 
 !insertmacro MUI_PAGE_LICENSE "C:\Users\david\git\ProbeSim3000\installer_data\LICENSE.txt"
 Page custom CustomInstallationPageCreate CustomInstallationPageLeave
@@ -17,6 +17,8 @@ Var RADIOBUTTON
 
 Section "Install"
     SetOutPath $INSTDIR
+    ; File "C:\Users\david\git\ProbeSim3000\installer_data\python-3.13.0.exe"
+    ; ExecWait '"$INSTDIR\python-3.13.0.exe" InstallAllUsers=0 PrependPath=1 Include_test=0 Include_launcher=0 TargetDir="$INSTDIR\python\"'
     File /r "C:\Users\david\git\ProbeSim3000\probe-simulation_server\*"
     CreateShortcut "$DESKTOP\ProbeSim-Server.lnk" "$INSTDIR\ProbeSim-Server.bat"
 SectionEnd

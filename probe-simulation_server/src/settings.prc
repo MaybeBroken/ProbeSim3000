@@ -1,4 +1,5 @@
 load-display pandagl
+aux-display p3tinydisplay
 sync-video true
 window-title ProbeSimServer
 fullscreen false
