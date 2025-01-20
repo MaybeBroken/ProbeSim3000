@@ -14,7 +14,6 @@ Name "ProbeSim3000"
 InstallDir $PROFILE\ProbeSim3000
 
 !insertmacro MUI_PAGE_LICENSE "C:\Users\david\git\ProbeSim3000\installer_data\LICENSE.txt"
-Page custom UninstallPageCreate UninstallPageLeave
 Page custom CustomInstallationPageCreate CustomInstallationPageLeave
 !insertmacro MUI_PAGE_DIRECTORY
 !insertmacro MUI_LANGUAGE "English"
