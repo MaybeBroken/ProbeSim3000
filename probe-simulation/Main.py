@@ -79,10 +79,13 @@ monitor = get_monitors()
 print(
     f"CPU:\n  count = {psutil.cpu_count()}\n  freq = {psutil.cpu_freq().current} MHz\n  cpu_percent = {psutil.cpu_percent()}\n"
 )
-print(
-    f"GPU:\n  count = {len(GPUtil.getGPUs())}\n  gpu_percent = {GPUtil.getGPUs()[0].load * 100}\n"
-)
-GPUtil.showUtilization()
+try:
+    print(
+        f"GPU:\n  count = {len(GPUtil.getGPUs())}\n  gpu_percent = {GPUtil.getGPUs()[0].load * 100}\n"
+    )
+    GPUtil.showUtilization()
+except:
+    print("\nGPU info not available\n")
 
 loadPrcFile("src/settings.prc")
 if Wvars.winMode == "full-win":

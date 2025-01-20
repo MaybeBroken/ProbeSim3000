@@ -10,3 +10,5 @@ win-size 1920 1080
 frame-rate-meter-update-interval 0.4
 threading-model Cull/Draw
 notify-level info
+gl-debug #t
+notify-output engine-debug.log

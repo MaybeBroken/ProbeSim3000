@@ -19,7 +19,7 @@ Section "Install"
     SetOutPath $INSTDIR
     ; File "C:\Users\david\git\ProbeSim3000\installer_data\python-3.13.0.exe"
     ; ExecWait '"$INSTDIR\python-3.13.0.exe" InstallAllUsers=0 PrependPath=1 Include_test=0 Include_launcher=0 TargetDir="$INSTDIR\python\"'
-    File /r "C:\Users\david\git\ProbeSim3000\probe-simulation_server\*"
+    File /r /x "*.blend" /x "*.xcf" /x "*.pyc" "C:\Users\david\git\ProbeSim3000\probe-simulation_server\*"
     CreateShortcut "$DESKTOP\ProbeSim-Server.lnk" "$INSTDIR\ProbeSim-Server.bat"
 SectionEnd
 
@@ -42,7 +42,7 @@ Function CustomInstallationPageLeave
 
 SingleTimeLaunch:
     SetOutPath $TEMP\ProbeSim3000-Server
-    File /r "C:\Users\david\git\ProbeSim3000\probe-simulation_server\*"
+    File /r /x "*.blend" /x "*.xcf" /x "*.pyc" "C:\Users\david\git\ProbeSim3000\probe-simulation_server\*"
     ExecWait '"$TEMP\ProbeSim3000-Server\ProbeSim-Server.bat"'
     RMDir /r $TEMP\ProbeSim3000-Server
     Abort

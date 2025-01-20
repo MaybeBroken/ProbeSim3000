@@ -21,6 +21,6 @@ if %errorlevel% neq 0 (
     )
 )
 echo Paths are correct.
-python3 -m pip install -r _req.txt
-python3 Main.py
+python3 -m pip install -r _req.txt > base-output.log
+python3 Main.py > base-output.log
 pause

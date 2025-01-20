@@ -13,3 +13,5 @@ want-directtools false
 notify-level info
 clock-mode limited  # Set the clock mode to limited
 clock-frame-rate 120
+gl-debug #t
+notify-output engine-debug.log
