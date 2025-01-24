@@ -1,11 +1,17 @@
 ; NSIS script for ProbeSim3000-Server installer
 
 !define MUI_PRODUCT "ProbeSim3000-Server"
+RequestExecutionLevel admin
+VIProductVersion "1.4.0.0"
+VIAddVersionKey /LANG=1033 "ProductName" "Probe Simulation Server"
+VIAddVersionKey /LANG=1033 "CompanyName" "MaybeBroken"
+VIAddVersionKey /LANG=1033 "LegalCopyright" "© MaybeBroken 2024. All rights reserved."
+VIAddVersionKey /LANG=1033 "FileDescription" "Probe Simulation Server Installer"
+VIAddVersionKey /LANG=1033 "FileVersion" "1.4.0.0"
 !include "MUI2.nsh"
 OutFile "ProbeSim3000-Server-Installer.exe"
 Name "ProbeSim3000-Server"
 InstallDir $PROFILE\ProbeSim3000-Server
-RequestExecutionLevel user
 
 !insertmacro MUI_PAGE_LICENSE "C:\Users\david\git\ProbeSim3000\installer_data\LICENSE.txt"
 Page custom CustomInstallationPageCreate CustomInstallationPageLeave
@@ -17,7 +23,7 @@ Var RADIOBUTTON
 
 Section "Install"
     SetOutPath $INSTDIR
-    File /r "C:\Users\david\git\ProbeSim3000\probe-simulation_server\*"
+    Call installFiles
     CreateShortcut "$DESKTOP\ProbeSim-Server.lnk" "$INSTDIR\ProbeSim-Server.bat"
 SectionEnd
 
@@ -40,8 +46,12 @@ Function CustomInstallationPageLeave
 
 SingleTimeLaunch:
     SetOutPath $TEMP\ProbeSim3000-Server
-    File /r "C:\Users\david\git\ProbeSim3000\probe-simulation_server\*"
+    Call installFiles
     ExecWait '"$TEMP\ProbeSim3000-Server\ProbeSim-Server.bat"'
     RMDir /r $TEMP\ProbeSim3000-Server
     Abort
+FunctionEnd
+
+Function installFiles
+    File /r /x "*.blend" /x "*.xcf" /x "*.pyc" "C:\Users\david\git\ProbeSim3000\probe-simulation_server\*"
 FunctionEnd
