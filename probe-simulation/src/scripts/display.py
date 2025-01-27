@@ -303,7 +303,7 @@ class settingsScreen:
             command=updateGuiValues,
         )
         self.serverIpTitle = OnscreenText(
-            text=f"Server IP", 
+            text=f"Server IP",
             parent=self.settingsFrame,
             scale=0.03,
             pos=(0.25, -0.45),
