@@ -1,4 +1,5 @@
 panda3d
+distutils
 websockets
 psutil
 GPUtil
